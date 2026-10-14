@@ -1282,3 +1282,152 @@ input {
   cursor: default;
   text-decoration: none;
 }
+
+/* ------------------------------------------------------------------ scan + gennemse */
+.page-wide {
+  max-width: 1180px;
+}
+.udbyder-valg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.felt-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+.felt-label.grow {
+  flex: 1;
+  min-width: 180px;
+}
+.felt-label .name-input,
+.felt-label select {
+  max-width: none;
+  font-size: 1rem;
+}
+.tekstfelt {
+  font: inherit;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 8px 12px;
+  border: 3px solid var(--ink);
+  border-radius: 12px;
+  background: #fffdf6;
+  resize: vertical;
+}
+.togt-felter {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.emoji-input {
+  width: 80px;
+  text-align: center;
+}
+.enhed-input {
+  width: 110px;
+}
+.facit-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-weight: 900;
+}
+.facit-row select,
+.felt-label > select {
+  font: inherit;
+  font-size: 1.2rem;
+  padding: 6px 10px;
+  border: 3px solid var(--ink);
+  border-radius: 10px;
+  background: #fffdf6;
+}
+.foto-raekke {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.foto-mini {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.foto-mini img {
+  width: 120px;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid var(--parchment-3);
+}
+.gennemse {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 16px;
+  align-items: start;
+}
+.gennemse-foto {
+  position: sticky;
+  top: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: calc(100vh - 100px);
+  overflow: auto;
+}
+.gennemse-foto .ark-img {
+  width: 100%;
+}
+.gennemse-liste {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.udkast.har-advarsel {
+  border-color: var(--gold-2);
+}
+.udkast.har-fejl {
+  border-color: var(--red);
+}
+.fund {
+  margin: 0;
+  padding: 8px 12px 8px 28px;
+  border-radius: 10px;
+  background: #fdebc8;
+  font-size: 0.95rem;
+}
+.fund-fejl {
+  color: #6b1d12;
+  font-weight: 800;
+}
+.gem-bar {
+  position: sticky;
+  bottom: 8px;
+  z-index: 5;
+}
+.polly-hop {
+  animation: hop 1.2s ease-in-out infinite;
+}
+@keyframes hop {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-4deg);
+  }
+  50% {
+    transform: translateY(-14px) rotate(4deg);
+  }
+}
+@media (max-width: 860px) {
+  .gennemse {
+    grid-template-columns: 1fr;
+  }
+  .gennemse-foto {
+    position: static;
+    max-height: 50vh;
+  }
+}

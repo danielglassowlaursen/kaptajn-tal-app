@@ -11,9 +11,12 @@
     "preview": "vite preview",
     "deploy": "pnpm build && npx -y wrangler@latest deploy",
     "db:init": "npx -y wrangler@latest d1 execute kaptajn-tal-app --remote --file worker/schema.sql -y",
-    "db:init:local": "npx -y wrangler@latest d1 execute kaptajn-tal-app --local --file worker/schema.sql -y"
+    "db:init:local": "npx -y wrangler@latest d1 execute kaptajn-tal-app --local --file worker/schema.sql -y",
+    "deploy:mine": "pnpm build && npx -y wrangler@latest deploy -c wrangler.local.jsonc",
+    "db:init:mine": "npx -y wrangler@latest d1 execute kaptajn-tal-app --remote -c wrangler.local.jsonc --file worker/schema.sql -y"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },

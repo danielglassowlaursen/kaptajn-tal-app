@@ -12,14 +12,22 @@
 //   PUT  /api/f/:kode/ark/:id           (billede) -> { ok }
 //   GET  /api/f/:kode/ark/:id           -> billedet
 //   DELETE /api/f/:kode/ark/:id         -> { ok }
+//   POST /api/f/:kode/scan              { udbyder, model, noegle, billeder, arkNavn?, tema? }
+//                                       -> { togt, usikre, forbrug } (et UDKAST – gemmes ikke)
 //
 // PUT opretter familien, hvis koden er ny. GET på en ukendt kode giver 404.
 // ---------------------------------------------------------------------------
 
+import { logForbrug, maaScanne } from './plan'
+import { scan, anslaaPris, ScanFejl, type Billede, type Udbyder } from './scan/udbydere'
+import { systemPrompt, brugerTekst, TEMAER } from './scan/prompt'
+import { tilTogt } from './scan/konverter'
+
 interface Env {
   DB: D1Database
   ASSETS: Fetcher
-  ARK: R2Bucket
+  /** Valgfri: uden R2 virker alt undtagen arkfotos. */
+  ARK?: R2Bucket
 }
 
 const KODE_RE = /^[a-z0-9æøå-]{6,40}$/
@@ -29,6 +37,9 @@ const MAX_BILLEDE = 4_000_000
 const BILLEDTYPER = new Set(['image/jpeg', 'image/png', 'image/webp'])
 const HISTORIK_MAX = 200
 const HISTORIK_MIN_INTERVAL = 30 * 60_000
+const MAX_SCAN = 15_000_000
+const MAX_BILLEDER = 4
+const UDBYDERE = new Set<Udbyder>(['anthropic', 'openai', 'openrouter'])
 
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } })
@@ -103,7 +114,7 @@ export default {
     const url = new URL(request.url)
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request)
 
-    const m = url.pathname.match(/^\/api\/f\/([^/]+)\/(progress|historik|gendan|togter|ark)(?:\/([^/]+))?$/)
+    const m = url.pathname.match(/^\/api\/f\/([^/]+)\/(progress|historik|gendan|togter|ark|scan)(?:\/([^/]+))?$/)
     if (!m) return json({ fejl: 'Ukendt adresse' }, 404)
     const kode = decodeURIComponent(m[1]).toLowerCase()
     const del = m[2]
@@ -195,13 +206,14 @@ export default {
         )
           .bind(fid, id, data, updatedAt, slettet ? 1 : 0)
           .run()
-        if (slettet) await env.ARK.delete(`${fid}/${id}`)
+        if (slettet && env.ARK) await env.ARK.delete(`${fid}/${id}`)
         return json({ ok: true })
       }
     }
 
     // ---------------- arkfotos (private, kun via familiekoden)
     if (del === 'ark' && id) {
+      if (!env.ARK) return json({ fejl: 'Arkfotos er ikke slået til på denne server' }, 501)
       const key = `${fid}/${id}`
       if (metode === 'GET') {
         if (!fid) return json({ fejl: 'Ikke fundet' }, 404)
@@ -222,6 +234,42 @@ export default {
       if (metode === 'DELETE' && fid) {
         await env.ARK.delete(key)
         return json({ ok: true })
+      }
+    }
+
+    // ---------------- scanning (udkast – en voksen gennemser før det gemmes)
+    if (del === 'scan' && !id && metode === 'POST' && fid) {
+      const text = await request.text()
+      if (text.length > MAX_SCAN) return json({ fejl: 'Billederne fylder for meget. Brug færre eller mindre fotos.' }, 413)
+      let body: { udbyder?: unknown; model?: unknown; noegle?: unknown; billeder?: unknown; arkNavn?: unknown; tema?: unknown }
+      try {
+        body = JSON.parse(text)
+      } catch {
+        return json({ fejl: 'Ugyldig JSON' }, 400)
+      }
+      const udbyder = body.udbyder as Udbyder
+      if (!UDBYDERE.has(udbyder)) return json({ fejl: 'Ukendt udbyder' }, 400)
+      if (typeof body.model !== 'string' || !/^[\w.\-/:]{2,100}$/.test(body.model)) return json({ fejl: 'Vælg en model' }, 400)
+      if (typeof body.noegle !== 'string' || body.noegle.length < 10 || body.noegle.length > 300) return json({ fejl: 'Indsæt din API-nøgle' }, 400)
+      const billeder = Array.isArray(body.billeder) ? (body.billeder as Billede[]) : []
+      if (billeder.length === 0 || billeder.length > MAX_BILLEDER) return json({ fejl: `Send 1–${MAX_BILLEDER} fotos` }, 400)
+      if (!billeder.every((b) => b && BILLEDTYPER.has(b.type) && typeof b.data === 'string' && b.data.length > 100)) return json({ fejl: 'Ugyldigt billede' }, 400)
+      const tema = TEMAER[typeof body.tema === 'string' ? body.tema : 'pirat'] ?? TEMAER.pirat
+      const arkNavn = typeof body.arkNavn === 'string' && body.arkNavn.trim() ? body.arkNavn.trim().slice(0, 80) : null
+
+      const tilladelse = await maaScanne(env.DB, fid, 'egen')
+      if (!tilladelse.ok) return json({ fejl: tilladelse.grund ?? 'Scanning er ikke tilladt' }, 402)
+
+      try {
+        const svar = await scan({ udbyder, model: body.model, noegle: body.noegle, system: systemPrompt(tema), tekst: brugerTekst(arkNavn), billeder })
+        const prisUsd = anslaaPris(body.model, svar.inputTokens, svar.outputTokens)
+        await logForbrug(env.DB, { familieId: fid, kilde: 'egen', udbyder, model: body.model, inputTokens: svar.inputTokens, outputTokens: svar.outputTokens, prisUsd })
+        if (!Array.isArray(svar.raa?.opgaver) || svar.raa.opgaver.length === 0) return json({ fejl: 'Modellen fandt ingen opgaver på arket.' }, 422)
+        const { togt, usikre } = tilTogt(svar.raa)
+        return json({ togt, usikre, forbrug: { inputTokens: svar.inputTokens, outputTokens: svar.outputTokens, prisUsd } })
+      } catch (e) {
+        if (e instanceof ScanFejl) return json({ fejl: e.message }, e.status)
+        return json({ fejl: 'Noget gik galt under scanningen.' }, 500)
       }
     }
 

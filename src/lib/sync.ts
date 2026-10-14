@@ -173,3 +173,26 @@ export async function sletArk(kode: string, togtId: string): Promise<void> {
     /* ignorer */
   }
 }
+
+// ------------------------------------------------------------ scanning
+export interface ScanUdkast {
+  togt: import('../types').Togt
+  usikre: Record<string, string>
+  forbrug: { inputTokens: number; outputTokens: number; prisUsd: number }
+}
+
+export async function scanArk(
+  kode: string,
+  req: { udbyder: string; model: string; noegle: string; billeder: { type: string; data: string }[]; arkNavn?: string; tema?: string },
+  signal?: AbortSignal,
+): Promise<{ status: 'ok'; udkast: ScanUdkast } | { status: 'fejl'; besked: string }> {
+  try {
+    const r = await fetch(`${base(kode)}/scan`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(req), signal })
+    const j = (await r.json().catch(() => ({}))) as Partial<ScanUdkast> & { fejl?: string }
+    if (!r.ok || !j.togt) return { status: 'fejl', besked: j.fejl ?? `Serveren svarede ${r.status}` }
+    return { status: 'ok', udkast: j as ScanUdkast }
+  } catch (e) {
+    if ((e as Error).name === 'AbortError') return { status: 'fejl', besked: 'Scanningen blev afbrudt.' }
+    return { status: 'fejl', besked: 'Ingen forbindelse til serveren.' }
+  }
+}

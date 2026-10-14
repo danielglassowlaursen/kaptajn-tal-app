@@ -13,3 +13,14 @@ export async function komprimer(fil: File, maks = 1600, kvalitet = 0.82): Promis
   bmp.close()
   return await new Promise<Blob>((ok, fejl) => c.toBlob((b) => (b ? ok(b) : fejl(new Error('Kunne ikke gemme billedet'))), 'image/jpeg', kvalitet))
 }
+
+/** Blob → base64 uden "data:"-præfiks. */
+export async function tilBase64(blob: Blob): Promise<string> {
+  const url = await new Promise<string>((ok, fejl) => {
+    const r = new FileReader()
+    r.onload = () => ok(String(r.result))
+    r.onerror = () => fejl(r.error)
+    r.readAsDataURL(blob)
+  })
+  return url.slice(url.indexOf(',') + 1)
+}

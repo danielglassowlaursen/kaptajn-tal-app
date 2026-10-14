@@ -27,10 +27,27 @@ regneark fra skolen, så svarene nemt kan skrives over på papiret bagefter.
 Appen leveres **uden opgaver**, bortset fra et lille prøvetogt. Familier tilføjer deres egne
 togter, og hvert togt kan få et foto af det rigtige ark, så svarene let kan skrives over.
 
-- **I dag**: Tilføj et togt fra en JSON-fil. Formatet står i [docs/TOGT-FORMAT.md](docs/TOGT-FORMAT.md),
+- **Scan et ark**: Tag et foto af arket. En AI-model laver opgaverne om til et togt med
+  historier, to hint-trin og facit. Du gennemser og retter alt, før det gemmes.
+- **Fra fil**: Tilføj et togt fra en JSON-fil. Formatet står i [docs/TOGT-FORMAT.md](docs/TOGT-FORMAT.md),
   og der er et eksempel i [examples/](examples/eksempel-togt.json).
-- **På vej**: Scan arket med din egen AI-nøgle (Anthropic, OpenAI eller OpenRouter), gennemse
-  og ret, og gem som togt. Se [ROADMAP.md](ROADMAP.md).
+
+### Scanning med din egen AI-nøgle
+
+Appen har ingen indbygget AI-adgang. Du bruger din egen nøgle hos én af tre udbydere:
+
+| Udbyder | Model | Bemærkning |
+| --- | --- | --- |
+| Anthropic | `claude-sonnet-5-5` (standard) eller `claude-opus-5-5` | Anbefalet. Ca. 1 kr. pr. ark med Sonnet 5.5. |
+| OpenAI | en model, der kan læse billeder og levere JSON efter skema | |
+| OpenRouter | modelnavn som på openrouter.ai/models | Én nøgle til mange modeller |
+
+- **Nøglen gemmes kun på din enhed.** Den sendes gennem appens server ved hver scanning og
+  gemmes eller logges ikke dér.
+- **Fotoet sendes til den valgte udbyder.** Tag kun billeder af selve arket, ikke af barnet.
+- **En voksen godkender altid.** Appen regner facit efter, hvor det kan lade sig gøre, og
+  advarer, hvis facit ikke passer, hvis hint 2 afslører svaret, eller hvis AI'en var usikker.
+- Scanning kræver en familiekode, så togtet og fotoet kan gemmes.
 
 ## Kør lokalt
 

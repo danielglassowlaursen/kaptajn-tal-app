@@ -3,6 +3,7 @@ import type { Togt } from '../types'
 
 interface Props {
   togter: Togt[]
+  onScan: () => void
   harKode: boolean
   onTilfoejFil: (text: string) => { ok: boolean; besked: string }
   onEksport: (t: Togt) => void
@@ -12,7 +13,7 @@ interface Props {
 }
 
 /** Kortet "Dine togter": tilføj fra fil, arkfoto, eksport og sletning. */
-export function MineTogter({ togter, harKode, onTilfoejFil, onEksport, onSlet, onFoto, onFjernFoto }: Props) {
+export function MineTogter({ togter, onScan, harKode, onTilfoejFil, onEksport, onSlet, onFoto, onFjernFoto }: Props) {
   const filRef = useRef<HTMLInputElement>(null)
   const fotoRef = useRef<HTMLInputElement>(null)
   const [fotoTil, setFotoTil] = useState<Togt | null>(null)
@@ -42,11 +43,14 @@ export function MineTogter({ togter, harKode, onTilfoejFil, onEksport, onSlet, o
     <div className="card">
       <h2 className="card-title">🗺️ Dine togter</h2>
       <p className="muted small">
-        Snart kan du scanne dit barns regneark og få et togt lavet automatisk. Indtil da kan du tilføje et togt fra en fil (se formatet i projektets
-        dokumentation).
+        Tag et foto af dit barns regneark, så laver Polly et togt med historier og hints. Du gennemser alt, før det gemmes. Kræver familiekode og din
+        egen AI-nøgle.
       </p>
       <div className="btn-row left">
-        <button className="btn btn-primary" onClick={() => filRef.current?.click()}>
+        <button className="btn btn-primary" onClick={onScan}>
+          📷 Scan et ark
+        </button>
+        <button className="btn btn-ghost btn-small" onClick={() => filRef.current?.click()}>
           📂 Tilføj togt fra fil
         </button>
         <input ref={filRef} type="file" accept="application/json,.json" hidden onChange={(e) => void handleFil(e)} />

@@ -5,6 +5,8 @@ import { flet, loadTogter, nytTogtId, saveTogter, synlige, type GemtTogt, type T
 import { downloadFil, filnavn, parseTogtFil, togtTilFil } from './lib/togtFil'
 import { komprimer } from './lib/billede'
 import { MineTogter } from './components/MineTogter'
+import { Scan } from './components/Scan'
+import { loadAi, saveAi, type AiIndstillinger } from './lib/ai'
 import { erTom, loadProgress, saveProgress, TOM_PROGRESS } from './lib/progress'
 import { begrav, bogfoer, evaluerDage, tilfoejTid, type Resultat } from './lib/spil'
 import { dagKey } from './lib/dato'
@@ -42,6 +44,7 @@ type Screen =
   | { kind: 'oversigt'; togtId?: string }
   | { kind: 'togt'; togtId: string; startIndex: number; skipIntro?: boolean }
   | { kind: 'begrav' }
+  | { kind: 'scan' }
 
 /** Udvikler-genvej: ?togt=togt2&i=13 åbner opgave 13 i togt 2 direkte. */
 function screenFromUrl(): Screen {
@@ -69,6 +72,7 @@ export default function App() {
   const [genindlaeser, setGenindlaeser] = useState(false)
   const [lyd, setLyd] = useState(() => lydTil())
   const [lager, setLager] = useState<TogtLager>(() => loadTogter())
+  const [ai, setAi] = useState<AiIndstillinger>(() => loadAi())
   const lagerRef = useRef(lager)
   lagerRef.current = lager
 
@@ -337,6 +341,32 @@ export default function App() {
     return { ok: true, besked: `Tilføjet: ${navne}.${adv}` }
   }
 
+  /** Gem et godkendt, scannet togt og dets foto. */
+  async function gemScannet(t: Togt, foto: Blob | null) {
+    const optaget = new Set([...DEMO_IDS, ...Object.keys(lagerRef.current)])
+    const id = nytTogtId(optaget)
+    const nu = Date.now()
+    const togt: Togt = { ...t, id, ark: t.ark ? { ...t.ark, foto: false } : undefined }
+    await gemTogt({ togt, updatedAt: nu, oprettet: nu })
+    setScreen({ kind: 'home' })
+    const k = kodeRef.current
+    let fotoBesked = ''
+    if (foto && k) {
+      const fejl = await uploadArk(k, id, foto)
+      if (!fejl) {
+        const g = lagerRef.current[id]
+        if (g) await gemTogt({ ...g, togt: { ...g.togt, ark: { navn: g.togt.ark?.navn ?? g.togt.title, kunPapir: g.togt.ark?.kunPapir, foto: true, fotoV: Date.now() } }, updatedAt: Date.now() })
+      } else fotoBesked = ` (Fotoet blev ikke gemt: ${fejl})`
+    }
+    addToasts([`⛵ Togtet "${t.title}" er klar med ${t.opgaver.length} opgaver.${fotoBesked}`])
+    fest('stor')
+  }
+
+  function gemAi(a: AiIndstillinger) {
+    saveAi(a)
+    setAi(a)
+  }
+
   function eksporterTogt(t: Togt) {
     downloadFil(`kaptajn-tal-togt-${filnavn(t.title)}.json`, togtTilFil(t))
   }
@@ -379,7 +409,7 @@ export default function App() {
 
   // ------------------------------------------------------------ render
   const active: MenuKey | null =
-    screen.kind === 'home' || screen.kind === 'togt'
+    screen.kind === 'home' || screen.kind === 'togt' || screen.kind === 'scan'
       ? 'home'
       : screen.kind === 'skat' || screen.kind === 'begrav'
         ? 'skat'
@@ -400,6 +430,7 @@ export default function App() {
   const mineTogterKort: ReactNode = (
     <MineTogter
       togter={egneTogter}
+      onScan={() => setScreen({ kind: 'scan' })}
       harKode={!!kode}
       onTilfoejFil={tilfoejTogtFraFil}
       onEksport={eksporterTogt}
@@ -427,6 +458,8 @@ export default function App() {
         onExit={() => setScreen({ kind: 'home' })}
       />
     )
+  } else if (screen.kind === 'scan') {
+    content = <Scan kode={kode} ai={ai} onGemAi={gemAi} onGem={(t, foto) => void gemScannet(t, foto)} onExit={() => setScreen({ kind: 'home' })} />
   } else if (screen.kind === 'oversigt') {
     content = <Oversigt progress={progress} togter={alleTogter} fokus={screen.togtId} onStart={(togtId, startIndex) => setScreen({ kind: 'togt', togtId, startIndex })} />
   } else if (screen.kind === 'begrav') {
