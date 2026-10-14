@@ -1,0 +1,29 @@
+{
+  "name": "kaptajn-tal-app",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:api": "npx -y wrangler@latest dev --port 8787",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.worker.json",
+    "build": "pnpm typecheck && vite build",
+    "preview": "vite preview",
+    "deploy": "pnpm build && npx -y wrangler@latest deploy",
+    "db:init": "npx -y wrangler@latest d1 execute kaptajn-tal-app --remote --file worker/schema.sql -y",
+    "db:init:local": "npx -y wrangler@latest d1 execute kaptajn-tal-app --local --file worker/schema.sql -y"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261009.1",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^4.5.0",
+    "typescript": "^5.8.0",
+    "vite": "^6.3.0"
+  },
+  "license": "SEE LICENSE IN LICENSE.md"
+}
