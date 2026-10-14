@@ -1,4 +1,5 @@
 import type { Progress } from '../types'
+import { appNavn, useTema } from '../tema'
 
 export type MenuKey = 'home' | 'skat' | 'crew' | 'oversigt'
 
@@ -10,17 +11,18 @@ interface Props {
 
 /** Fast topmenu: Togter, Din skat, Din besætning. */
 export function TopMenu({ active, progress, onNav }: Props) {
+  const t = useTema()
   const loest = Object.values(progress.togter).reduce((n, t) => n + Object.keys(t.done).length, 0)
   const items: { key: MenuKey; emoji: string; label: string; badge?: string }[] = [
-    { key: 'home', emoji: '🗺️', label: 'Togter' },
-    { key: 'skat', emoji: '💰', label: 'Din skat', badge: progress.pung > 0 ? `${progress.skat} +${progress.pung}` : `${progress.skat}` },
-    { key: 'crew', emoji: '⚓', label: 'Din besætning', badge: `${progress.crew.length}` },
+    { key: 'home', emoji: t.menu.rejser[0], label: t.menu.rejser[1] },
+    { key: 'skat', emoji: t.menu.skat[0], label: t.menu.skat[1], badge: progress.pung > 0 ? `${progress.skat} +${progress.pung}` : `${progress.skat}` },
+    { key: 'crew', emoji: t.menu.crew[0], label: t.menu.crew[1], badge: `${progress.crew.length}` },
     { key: 'oversigt', emoji: '📋', label: 'Oversigt', badge: `${loest}` },
   ]
   return (
     <nav className="topmenu" aria-label="Hovedmenu">
       <button className="topmenu-brand" onClick={() => onNav('home')}>
-        🏴‍☠️ <span>Kaptajn Tal</span>
+        {t.flag} <span>{appNavn(t)}</span>
       </button>
       <div className="topmenu-items">
         {items.map((it) => (

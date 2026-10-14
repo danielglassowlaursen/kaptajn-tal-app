@@ -5,9 +5,11 @@ import { komprimer, tilBase64 } from '../lib/billede'
 import { scanArk, type ScanUdkast } from '../lib/sync'
 import { AiIndstillingerKort } from './AiIndstillinger'
 import { Gennemse } from './Gennemse'
+import { useTema, type TemaId } from '../tema'
 
 interface Props {
   kode: string | null
+  tema: TemaId
   ai: Ai
   onGemAi: (a: Ai) => void
   /** Gem det godkendte togt sammen med det første foto. */
@@ -30,7 +32,9 @@ const POLLY_VENTER = [
 ]
 
 /** Scan et ark: fotos → AI → gennemse → gem. */
-export function Scan({ kode, ai, onGemAi, onGem, onExit }: Props) {
+export function Scan({ kode, tema, ai, onGemAi, onGem, onExit }: Props) {
+  const t = useTema()
+  const ventetekster = POLLY_VENTER.map((x) => x.replace('Polly', t.hjaelper.navn).replace('kikkert', t.id === 'pirat' ? 'kikkert' : 'tryllestav'))
   const [fotos, setFotos] = useState<Foto[]>([])
   const [arkNavn, setArkNavn] = useState('')
   const [fase, setFase] = useState<'fotos' | 'scanner' | 'gennemse'>('fotos')
@@ -44,7 +48,7 @@ export function Scan({ kode, ai, onGemAi, onGem, onExit }: Props) {
 
   useEffect(() => {
     if (fase !== 'scanner') return
-    const id = window.setInterval(() => setVenteTekst((v) => Math.min(v + 1, POLLY_VENTER.length - 1)), 12000)
+    const id = window.setInterval(() => setVenteTekst((v) => Math.min(v + 1, ventetekster.length - 1)), 12000)
     return () => window.clearInterval(id)
   }, [fase])
 
@@ -75,7 +79,7 @@ export function Scan({ kode, ai, onGemAi, onGem, onExit }: Props) {
     const billeder = await Promise.all(fotos.map(async (f) => ({ type: 'image/jpeg', data: await tilBase64(f.blob) })))
     const r = await scanArk(
       kode,
-      { udbyder: ai.udbyder, model: ai.modeller[ai.udbyder], noegle: ai.noegler[ai.udbyder] ?? '', billeder, arkNavn: arkNavn.trim() || undefined, tema: 'pirat' },
+      { udbyder: ai.udbyder, model: ai.modeller[ai.udbyder], noegle: ai.noegler[ai.udbyder] ?? '', billeder, arkNavn: arkNavn.trim() || undefined, tema },
       abort.current.signal,
     )
     if (r.status === 'fejl') {
@@ -104,9 +108,9 @@ export function Scan({ kode, ai, onGemAi, onGem, onExit }: Props) {
     return (
       <div className="page">
         <div className="card center">
-          <div className="big-emoji polly-hop">🦜</div>
-          <h1 className="title">Polly arbejder</h1>
-          <p className="intro">{POLLY_VENTER[venteTekst]}</p>
+          <div className="big-emoji polly-hop">{t.hjaelper.emoji}</div>
+          <h1 className="title">{t.hjaelper.navn} arbejder</h1>
+          <p className="intro">{ventetekster[venteTekst]}</p>
           <p className="muted small">Det tager typisk et til tre minutter. Lad skærmen være åben.</p>
           <button
             className="btn btn-ghost"
@@ -128,7 +132,7 @@ export function Scan({ kode, ai, onGemAi, onGem, onExit }: Props) {
 
       {!kode && (
         <div className="card">
-          <p>Scanning kræver en familiekode, så togtet og fotoet kan gemmes. Opret en på forsiden først.</p>
+          <p>Scanning kræver en familiekode, så {t.rejsen} og fotoet kan gemmes. Opret en på forsiden først.</p>
           <button className="btn btn-primary" onClick={onExit}>
             Til forsiden
           </button>
@@ -175,14 +179,16 @@ export function Scan({ kode, ai, onGemAi, onGem, onExit }: Props) {
           </div>
 
           <div className="card">
-            <h2 className="card-title">2. Lad Polly lave togtet</h2>
+            <h2 className="card-title">
+              2. Lad {t.hjaelper.navn} lave {t.rejsen}
+            </h2>
             <p className="muted small">
               Bruger {UDBYDER_INFO[ai.udbyder].navn} med modellen <b>{ai.modeller[ai.udbyder]}</b>. Fotoet sendes til {UDBYDER_INFO[ai.udbyder].navn}. Bagefter
               gennemser du alt, før det gemmes.
             </p>
             <div className="btn-row left">
               <button className="btn btn-primary btn-big" disabled={fotos.length === 0} onClick={() => void start()}>
-                Lav togtet 🦜
+                Lav {t.rejsen} {t.hjaelper.emoji}
               </button>
               <button className="btn btn-ghost btn-small" onClick={() => onGemAi({ ...ai, noegler: { ...ai.noegler, [ai.udbyder]: undefined } })}>
                 Skift nøgle eller udbyder

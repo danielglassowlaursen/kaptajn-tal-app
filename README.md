@@ -1,8 +1,16 @@
 # Kaptajn Tal 🏴‍☠️
 
 **Matematik fortalt som eventyr.** Børn, der har svært ved den tørre vej gennem regnestykkerne,
-får dem fortalt som historier: guldmønter, kanonkugler, skattekort – og papegøjen Polly, der
-hjælper lidt ad gangen.
+får dem fortalt som historier i deres yndlingsunivers – med en hjælper, der giver hints lidt ad
+gangen.
+
+| Tema | Hjælper | Belønning |
+| --- | --- | --- |
+| 🏴‍☠️ **Kaptajn Tal** – pirater | Papegøjen Polly | Guldmønter, besætning og skibe |
+| 🦄 **Kaptajn Tal – Prinsesse Plus** – enhjørninger og prinsesser | Enhjørningen Luna | Ædelsten, hof og slotte |
+| 🚀 **Kaptajn Tal – Kommandør Komma** – rummet (på vej) | Robotten Bip | Stjernestøv og raketter |
+
+Se [docs/TEMAER.md](docs/TEMAER.md), hvis du vil lave dit eget tema.
 
 > 🇬🇧 *English summary below.*
 

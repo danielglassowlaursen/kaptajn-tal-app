@@ -142,7 +142,7 @@ export function FamilieKode({ kode, sync, onForbind, onLoes, onAfbryd, onEksport
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && forbind()}
-              placeholder="fx kraken-482"
+              placeholder="fx anker-komet-ugle-42"
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}

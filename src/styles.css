@@ -18,6 +18,12 @@
   --font-body: 'Nunito', system-ui, -apple-system, sans-serif;
   --radius: 16px;
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --kort-1: #d9c38f;
+  --kort-2: #c7ad73;
+  --kort-kant: #8a6b3a;
+  --kort-rute: #6b4a1e;
+  --topmenu-bg: rgba(7, 26, 40, 0.92);
+  --btn-skygge: #8f6208;
 }
 
 * {
@@ -156,7 +162,7 @@ input {
 .btn-primary {
   background: linear-gradient(180deg, var(--gold), var(--gold-2));
   color: var(--ink);
-  box-shadow: 0 4px 0 #8f6208, 0 8px 16px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 0 var(--btn-skygge), 0 8px 16px rgba(0, 0, 0, 0.25);
 }
 .btn-primary:not(:disabled):hover {
   filter: brightness(1.06);
@@ -213,14 +219,14 @@ input {
 .kort {
   width: 100%;
   height: auto;
-  background: linear-gradient(180deg, #d9c38f, #c7ad73);
-  border: 3px solid #8a6b3a;
+  background: linear-gradient(180deg, var(--kort-1), var(--kort-2));
+  border: 3px solid var(--kort-kant);
   border-radius: 12px;
   box-shadow: var(--shadow);
 }
 .kort-route {
   fill: none;
-  stroke: #6b4a1e;
+  stroke: var(--kort-rute);
   stroke-width: 3;
   stroke-dasharray: 8 8;
   stroke-linecap: round;
@@ -718,7 +724,7 @@ input {
   max-width: 420px;
   height: auto;
   border-radius: 12px;
-  border: 3px solid #8a6b3a;
+  border: 3px solid var(--kort-kant);
   box-shadow: var(--shadow);
   display: block;
 }
@@ -905,7 +911,7 @@ input {
   justify-content: space-between;
   gap: 10px;
   padding: 8px 16px;
-  background: rgba(7, 26, 40, 0.92);
+  background: var(--topmenu-bg);
   backdrop-filter: blur(8px);
   border-bottom: 3px solid var(--gold-2);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
@@ -1430,4 +1436,49 @@ input {
     position: static;
     max-height: 50vh;
   }
+}
+
+/* ------------------------------------------------------------------ tema: Prinsesse Plus */
+:root[data-tema='prinsesse'] {
+  --sea: #3a1d4d;
+  --sea-2: #6a2c6e;
+  --sea-3: #a3508f;
+  --parchment: #fff0f7;
+  --parchment-2: #fbdcec;
+  --parchment-3: #eeb4d3;
+  --ink: #3b1838;
+  --ink-soft: #7d4a72;
+  --gold: #ffa6d6;
+  --gold-2: #d9529c;
+  --font-head: 'Cherry Swash', 'Georgia', serif;
+  --kort-1: #fde4f1;
+  --kort-2: #f2c3df;
+  --kort-kant: #b25a96;
+  --kort-rute: #b25a96;
+  --topmenu-bg: rgba(48, 20, 62, 0.92);
+  --btn-skygge: #a3366f;
+}
+:root[data-tema='prinsesse'] .title-xl {
+  color: #ffd1ea;
+  text-shadow: 0 3px 0 var(--gold-2), 0 8px 18px rgba(0, 0, 0, 0.45);
+}
+:root[data-tema='prinsesse'] .coins {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.hero-undertitel {
+  font-family: var(--font-head);
+  color: var(--gold);
+  font-size: 1.6rem;
+  margin: -4px 0 6px;
+}
+.tema-valg {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.tema-chip {
+  font-size: 1rem;
+  min-height: 44px;
+  padding: 8px 14px;
 }

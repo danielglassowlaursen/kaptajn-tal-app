@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { Gravested, Progress, Togt } from './types'
-import { DEMO_IDS, DEMO_TOGTER } from './data/togter'
+import { DEMO_IDS, demoTogter } from './data/togter'
+import { hentTema, TemaProvider, type TemaId } from './tema'
 import { flet, loadTogter, nytTogtId, saveTogter, synlige, type GemtTogt, type TogtLager } from './lib/togtStore'
 import { downloadFil, filnavn, parseTogtFil, togtTilFil } from './lib/togtFil'
 import { komprimer } from './lib/billede'
@@ -73,6 +74,14 @@ export default function App() {
   const [lyd, setLyd] = useState(() => lydTil())
   const [lager, setLager] = useState<TogtLager>(() => loadTogter())
   const [ai, setAi] = useState<AiIndstillinger>(() => loadAi())
+  const tema = hentTema(progress.tema)
+  const temaRef = useRef(tema)
+  temaRef.current = tema
+
+  // Temaets farver og skrift styres af CSS ud fra data-tema på <html>.
+  useEffect(() => {
+    document.documentElement.dataset.tema = tema.id
+  }, [tema.id])
   const lagerRef = useRef(lager)
   lagerRef.current = lager
 
@@ -193,7 +202,7 @@ export default function App() {
   // Når skyen er tjekket (og når dagen skifter): glemte dage koster besætning.
   useEffect(() => {
     if (!klar) return
-    const r = evaluerDage(ref.current, iDag)
+    const r = evaluerDage(ref.current, iDag, temaRef.current)
     if (r.p !== ref.current) update(r.p)
     addToasts(r.events)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -217,7 +226,7 @@ export default function App() {
   function tick(sek: number) {
     const dag = dagKey()
     if (dag !== iDag) setIDag(dag)
-    const r = tilfoejTid(ref.current, sek, dag)
+    const r = tilfoejTid(ref.current, sek, dag, temaRef.current)
     update(r.p, r.events.length > 0)
     addToasts(r.events)
     if (r.events.length > 0) {
@@ -241,7 +250,7 @@ export default function App() {
   }
 
   function resultat(togtId: string, opgaveId: string, r: Resultat) {
-    const b = bogfoer(ref.current, togtId, opgaveId, r)
+    const b = bogfoer(ref.current, togtId, opgaveId, r, temaRef.current)
     update(b.p)
     return { guld: b.guld, tyveri: b.tyveri }
   }
@@ -358,7 +367,7 @@ export default function App() {
         if (g) await gemTogt({ ...g, togt: { ...g.togt, ark: { navn: g.togt.ark?.navn ?? g.togt.title, kunPapir: g.togt.ark?.kunPapir, foto: true, fotoV: Date.now() } }, updatedAt: Date.now() })
       } else fotoBesked = ` (Fotoet blev ikke gemt: ${fejl})`
     }
-    addToasts([`⛵ Togtet "${t.title}" er klar med ${t.opgaver.length} opgaver.${fotoBesked}`])
+    addToasts([`${tema.flag} "${t.title}" er klar med ${t.opgaver.length} opgaver.${fotoBesked}`])
     fest('stor')
   }
 
@@ -422,7 +431,7 @@ export default function App() {
   )
 
   const egneTogter = synlige(lager)
-  const alleTogter: Togt[] = [...DEMO_TOGTER, ...egneTogter].map((t) =>
+  const alleTogter: Togt[] = [...demoTogter(tema.id), ...egneTogter].map((t) =>
     t.ark?.foto && kode ? { ...t, ark: { ...t.ark, billede: `${arkUrl(kode, t.id)}?v=${t.ark.fotoV ?? 0}` } } : t,
   )
   const findTogt = (id: string) => alleTogter.find((t) => t.id === id)
@@ -459,7 +468,7 @@ export default function App() {
       />
     )
   } else if (screen.kind === 'scan') {
-    content = <Scan kode={kode} ai={ai} onGemAi={gemAi} onGem={(t, foto) => void gemScannet(t, foto)} onExit={() => setScreen({ kind: 'home' })} />
+    content = <Scan kode={kode} tema={tema.id} ai={ai} onGemAi={gemAi} onGem={(t, foto) => void gemScannet(t, foto)} onExit={() => setScreen({ kind: 'home' })} />
   } else if (screen.kind === 'oversigt') {
     content = <Oversigt progress={progress} togter={alleTogter} fokus={screen.togtId} onStart={(togtId, startIndex) => setScreen({ kind: 'togt', togtId, startIndex })} />
   } else if (screen.kind === 'begrav') {
@@ -476,6 +485,7 @@ export default function App() {
         kodeKort={kodeKort}
         mineTogter={mineTogterKort}
         onName={(name) => update({ ...progress, name })}
+        onTema={(id: TemaId) => update({ ...progress, tema: id })}
         onStart={(togtId, startIndex) => setScreen({ kind: 'togt', togtId, startIndex })}
         onOversigt={(togtId) => setScreen({ kind: 'oversigt', togtId })}
       />
@@ -483,12 +493,12 @@ export default function App() {
   }
 
   return (
-    <>
+    <TemaProvider tema={tema}>
       <TopMenu active={active} progress={progress} onNav={(k) => setScreen({ kind: k })} />
       {content}
       <Footer onRefresh={() => void genindlaes()} travl={genindlaeser} lyd={lyd} onLyd={skiftLyd} />
       <Toasts items={toasts} onDone={removeToast} />
       <KonfettiLag />
-    </>
+    </TemaProvider>
   )
 }

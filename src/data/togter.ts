@@ -5,8 +5,9 @@
 // Se src/types.ts for alle opgavetyper.
 // ---------------------------------------------------------------------------
 import type { Togt } from '../types'
+import type { TemaId } from '../tema'
 
-export const DEMO_TOGTER: Togt[] = [
+const DEMO_PIRAT: Togt[] = [
   {
     id: 'demo',
     title: 'Skildpaddeøen',
@@ -86,5 +87,32 @@ export const DEMO_TOGTER: Togt[] = [
   },
 ]
 
+// Samme regnestykker, facit og id'er som pirat-udgaven – kun historierne er anderledes,
+// så fremgangen på prøvetogtet følger med, hvis familien skifter tema.
+const PRINSESSE_TEKST: Record<string, { story: string; question?: string }> = {
+  'demo-01': { story: 'Prinsessen har 245 ædelsten i sit skrin. I rosenhaven finder hun en lille æske med 38 ædelsten mere.', question: 'Hvor mange ædelsten har prinsessen nu?' },
+  'demo-02': { story: 'Enhjørningen Luna tæller stjerner på himlen, men hun springer nogle af dem over.' },
+  'demo-03': { story: 'To skatkister står i slotssalen. Hvilken rummer flest perler?' },
+  'demo-04': { story: 'Prinsessens nye kjole har 8 felter. Hun vil sy glimmer på 1/4 af felterne.', question: 'Tryk på de felter, der skal have glimmer.' },
+  'demo-05': { story: 'Den gyldne krone er gemt i slotshaven. Stedet er markeret med et X på kortet.', question: 'Hvad er kronens koordinater (x ; y)?' },
+}
+
+const DEMO_PRINSESSE: Togt[] = DEMO_PIRAT.map((t) => ({
+  ...t,
+  title: 'Rosenslottet',
+  emoji: '🌹',
+  intro: 'Et lille prøve-eventyr med fem opgaver, så du kan se, hvordan appen virker. Rigtige eventyr laver du ved at scanne dit eget regneark.',
+  opgaver: t.opgaver.map((o) => ({
+    ...o,
+    ...PRINSESSE_TEKST[o.id],
+    hints: o.hints?.map((h) => h.replace('mønter', 'ædelsten').replace('kanonkugler', 'stjerner')),
+  })),
+}))
+
+/** Prøvetogtet i det valgte tema. */
+export function demoTogter(tema: TemaId): Togt[] {
+  return tema === 'prinsesse' ? DEMO_PRINSESSE : DEMO_PIRAT
+}
+
 /** Id'er der er reserveret til indbyggede togter. */
-export const DEMO_IDS = new Set(DEMO_TOGTER.map((t) => t.id))
+export const DEMO_IDS = new Set(DEMO_PIRAT.map((t) => t.id))

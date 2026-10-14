@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import type { Togt } from '../types'
+import { useTema } from '../tema'
 
 interface Props {
   togter: Togt[]
@@ -14,6 +15,7 @@ interface Props {
 
 /** Kortet "Dine togter": tilføj fra fil, arkfoto, eksport og sletning. */
 export function MineTogter({ togter, onScan, harKode, onTilfoejFil, onEksport, onSlet, onFoto, onFjernFoto }: Props) {
+  const t0 = useTema()
   const filRef = useRef<HTMLInputElement>(null)
   const fotoRef = useRef<HTMLInputElement>(null)
   const [fotoTil, setFotoTil] = useState<Togt | null>(null)
@@ -41,9 +43,11 @@ export function MineTogter({ togter, onScan, harKode, onTilfoejFil, onEksport, o
 
   return (
     <div className="card">
-      <h2 className="card-title">🗺️ Dine togter</h2>
+      <h2 className="card-title">
+        🗺️ Dine {t0.rejser}
+      </h2>
       <p className="muted small">
-        Tag et foto af dit barns regneark, så laver Polly et togt med historier og hints. Du gennemser alt, før det gemmes. Kræver familiekode og din
+        Tag et foto af dit barns regneark, så laver {t0.hjaelper.navn} et {t0.rejse} med historier og hints. Du gennemser alt, før det gemmes. Kræver familiekode og din
         egen AI-nøgle.
       </p>
       <div className="btn-row left">
@@ -51,7 +55,7 @@ export function MineTogter({ togter, onScan, harKode, onTilfoejFil, onEksport, o
           📷 Scan et ark
         </button>
         <button className="btn btn-ghost btn-small" onClick={() => filRef.current?.click()}>
-          📂 Tilføj togt fra fil
+          📂 Tilføj fra fil
         </button>
         <input ref={filRef} type="file" accept="application/json,.json" hidden onChange={(e) => void handleFil(e)} />
       </div>
@@ -91,7 +95,7 @@ export function MineTogter({ togter, onScan, harKode, onTilfoejFil, onEksport, o
                 <button
                   className="btn btn-ghost btn-small"
                   onClick={() => {
-                    if (window.confirm(`Slet togtet "${t.title}"? Fremgangen på togtet bliver liggende i skatten, men opgaverne forsvinder.`)) onSlet(t)
+                    if (window.confirm(`Slet "${t.title}"? Fremgangen bliver liggende i skatten, men opgaverne forsvinder.`)) onSlet(t)
                   }}
                 >
                   🗑 Slet

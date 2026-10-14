@@ -3,7 +3,7 @@
 _Updated: 2026-10-14 · laptop_
 
 ## Now
-Fase 2 er bygget og deployet: scanning med egen nøgle (Anthropic/OpenAI/OpenRouter) + gennemse-skærm + facit-tjek. Mangler en rigtig scanning med en ægte nøgle – Daniel tester med sin Claude-nøgle.
+Fase 3 er færdig og deployet: tema-system med Pirater og Prinsesse Plus. Næste er fase 4 (tema 3 Kommandør Komma, onboarding, rate-limit, Deploy-knap). Stadig: Daniel tester en rigtig scanning og slår R2 til.
 
 ## State
 - ✅ Fase 0: licens, README, CONTRIBUTING med bidragsaftale, ROADMAP, prøvetogt.
@@ -16,6 +16,7 @@ Fase 2 er bygget og deployet: scanning med egen nøgle (Anthropic/OpenAI/OpenRou
 - ✅ Sikkerhedskopi-fil indeholder nu også egne togter (version 2).
 - ✅ Fase 2: `POST /api/f/:kode/scan` (worker/scan/: skema, prompt, adaptere, konverter). Fladt skema med kun én union-type (Anthropic-grænse: 16 unions, 24 valgfrie). Claude via SDK med streaming, effort medium, struktureret output og `fallbacks: "default"`. OpenAI/OpenRouter via chat completions + json_schema.
 - ✅ Klient: AI-indstillinger på enheden (`src/lib/ai.ts`), Scan-skærm (fotos komprimeres til 1600 px JPEG), Gennemse-editor med facit-tjek (`src/lib/facitTjek.ts`: regner udtryk, x-ligninger, sammenlign, sortering, hint-2-læk).
+- ✅ Fase 3: `src/tema/` (typer, pirat, prinsesse, kontekst `useTema`). Tema gemmes i `Progress.tema` og synker. CSS-palet + skrift via `data-tema` på <html>. Spillogik (`spil.ts`) tager tema som parameter. Besætningens navne vises efter plads, så et temaskift giver temaets navne. Prøvetogt i begge temaer med samme opgave-id'er. AI-prompten kender begge temaer. Guide: `docs/TEMAER.md`.
 - ✅ Forbrug logges pr. scanning (`forbrug`-tabellen) med anslået pris for Claude-modeller.
 - ✅ Deployet: https://kaptajn-tal-app.dl-a66.workers.dev (Daniels konto, `wrangler.local.jsonc` – ignoreret af git). R2 er IKKE slået til endnu → arkfotos svarer 501.
 - 🚧 Ingen rigtig scanning kørt endnu (ingen nøgle på maskinen). Fejlveje er testet mod alle tre udbydere med ugyldig nøgle; gennemse/gem er testet med simuleret AI-svar.

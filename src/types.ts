@@ -169,4 +169,6 @@ export interface Progress {
   sidsteTjek: string | null
   /** Hvornår fremgangen sidst blev ændret (ms). Nyeste vinder ved synk. */
   updatedAt: number
+  /** Familiens valgte tema (følger med familiekoden). */
+  tema?: 'pirat' | 'prinsesse'
 }

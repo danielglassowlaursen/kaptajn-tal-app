@@ -1,6 +1,7 @@
 import type { Progress, Opgave, Svar, Togt } from '../types'
 import { answerText } from '../lib/check'
 import { nrTekst } from './TogtView'
+import { useTema } from '../tema'
 
 interface Props {
   progress: Progress
@@ -15,7 +16,7 @@ type Status = 'foerste' | 'andet' | 'polly' | 'forkert' | 'loest' | 'aaben'
 const STATUS: Record<Status, { ikon: string; tekst: string }> = {
   foerste: { ikon: '✅', tekst: 'Selv, første forsøg' },
   andet: { ikon: '✅', tekst: 'Selv, med et hint' },
-  polly: { ikon: '🦜', tekst: 'Polly sagde svaret' },
+  polly: { ikon: '💡', tekst: 'Hjælperen sagde svaret' },
   forkert: { ikon: '❌', tekst: 'Forkert – svaret blev vist' },
   loest: { ikon: '✅', tekst: 'Løst' },
   aaben: { ikon: '⬜', tekst: 'Ikke løst endnu' },
@@ -40,6 +41,7 @@ function label(o: Opgave): string {
 
 /** Siden "Oversigt": facit og hjælp pr. opgave, så svarene kan skrives over på arket bagefter. */
 export function Oversigt({ progress, togter, fokus, onStart }: Props) {
+  const t = useTema()
   return (
     <div className="page">
       <h1 className="section-title">📋 Oversigt</h1>
@@ -67,7 +69,9 @@ export function Oversigt({ progress, togter, fokus, onStart }: Props) {
 
             <div className="oversigt-sum">
               <span>✅ {antal('foerste') + antal('andet') + antal('loest')} selv</span>
-              <span>🦜 {antal('polly')} Polly</span>
+              <span>
+                {t.hjaelper.emoji} {antal('polly')} {t.hjaelper.navn}
+              </span>
               <span>❌ {antal('forkert')} forkert</span>
               <span>⬜ {antal('aaben')} mangler</span>
             </div>
@@ -85,8 +89,8 @@ export function Oversigt({ progress, togter, fokus, onStart }: Props) {
                   </div>
                   <div className="ov-facit">{status === 'aaben' ? <span className="muted">–</span> : <b>{answerText(o)}</b>}</div>
                   <div className="ov-status" title={STATUS[status].tekst}>
-                    <span className="ov-ikon">{STATUS[status].ikon}</span>
-                    <span className="ov-status-tekst">{STATUS[status].tekst}</span>
+                    <span className="ov-ikon">{status === 'polly' ? t.hjaelper.emoji : STATUS[status].ikon}</span>
+                    <span className="ov-status-tekst">{status === 'polly' ? `${t.hjaelper.navn} sagde svaret` : STATUS[status].tekst}</span>
                   </div>
                 </div>
               ))}
@@ -100,7 +104,7 @@ export function Oversigt({ progress, togter, fokus, onStart }: Props) {
 
             {foersteAabne !== -1 && (
               <button className="btn btn-primary" onClick={() => onStart(togt.id, foersteAabne)}>
-                {loest === 0 ? 'Sejl ud! ⛵' : 'Fortsæt togtet ⛵'}
+                {loest === 0 ? t.startRejse : t.fortsaetRejse}
               </button>
             )}
           </details>

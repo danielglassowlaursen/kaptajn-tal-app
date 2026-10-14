@@ -7,7 +7,7 @@ import { Moent } from './Moent'
 import { ArkOverlay } from './ArkOverlay'
 import { answerText } from '../lib/check'
 import { sekunderIDag, type Resultat, type Tyveri } from '../lib/spil'
-import { PRAISE, POLLY_AFSLOERING, SVEN } from '../data/flaade'
+import { useTema } from '../tema'
 import { CONFIG } from '../config'
 import { afspil } from '../lib/lyd'
 import { fest } from '../lib/fest'
@@ -47,6 +47,7 @@ export function useTidsTaeller(aktiv: boolean, onTick: (sek: number) => void) {
 }
 
 export function TogtView({ togt, progress, startIndex, skipIntro, iDag, onResultat, onTick, onBegrav, onOversigt, onExit }: Props) {
+  const t = useTema()
   const [phase, setPhase] = useState<Phase>(skipIntro ? 'opgave' : 'intro')
   const [index, setIndex] = useState(Math.min(startIndex, togt.opgaver.length - 1))
   const [attempts, setAttempts] = useState(0)
@@ -87,17 +88,17 @@ export function TogtView({ togt, progress, startIndex, skipIntro, iDag, onResult
       setSessionGuld((s) => s + guld)
       setMessage({
         kind: 'ok',
-        text: isReplay ? 'God øvelse! Du har tjent guldet her én gang, så der er intet på spil.' : `${PRAISE[index % PRAISE.length]} +${guld} guldmønter i pungen`,
+        text: isReplay ? `God øvelse! Du har tjent ${t.valutaKort} her én gang, så der er intet på spil.` : `${t.ros[index % t.ros.length]} +${guld} ${t.valuta} i ${t.pung}`,
       })
     } else if (attempts === 0) {
       setAttempts(1)
       setHintLevel((h) => Math.max(h, 1))
-      setMessage({ kind: 'retry', text: 'Ikke helt, kaptajn. Prøv én gang til – Polly har et hint til dig!' })
+      setMessage({ kind: 'retry', text: `Ikke helt, ${t.titel}. Prøv én gang til – ${t.hjaelper.navn} har et hint til dig!` })
     } else {
       const { tyveri } = onResultat(opgave.id, 'forkert')
       setStatus('revealed')
       setHintLevel(hints.length)
-      const sven = tyveri ? ` ${SVEN.emoji} ${tyveri.besked}` : ''
+      const sven = tyveri ? ` ${t.tyv.emoji} ${tyveri.besked}` : ''
       setMessage({ kind: 'reveal', text: `Det rigtige svar er: ${answerText(opgave)}.${sven}` })
     }
   }
@@ -110,9 +111,9 @@ export function TogtView({ togt, progress, startIndex, skipIntro, iDag, onResult
     }
     // Alle hints er brugt: Polly kommer med en frisk bemærkning og afslører svaret.
     onResultat(opgave.id, 'polly')
-    setPollyComment(POLLY_AFSLOERING[Math.floor(Math.random() * POLLY_AFSLOERING.length)])
+    setPollyComment(t.afsloering[Math.floor(Math.random() * t.afsloering.length)])
     setStatus('revealed')
-    setMessage({ kind: 'polly', text: 'Polly sagde svaret, så der er ingen guld denne gang – men du lærte noget! Skriv det på papiret.' })
+    setMessage({ kind: 'polly', text: `${t.hjaelper.navn} sagde svaret, så der er ingen ${t.valutaKort} denne gang – men du lærte noget! Skriv det på papiret.` })
   }
 
   function next() {
@@ -130,7 +131,11 @@ export function TogtView({ togt, progress, startIndex, skipIntro, iDag, onResult
   }
 
   const pollyLabel =
-    hintLevel === 0 ? '🦜 Spørg Polly om et hint' : hintLevel < hints.length ? '🦜 Polly, hjælp lidt mere' : '🦜 Polly, sig bare svaret'
+    hintLevel === 0
+      ? `${t.hjaelper.emoji} Spørg ${t.hjaelper.navn} om et hint`
+      : hintLevel < hints.length
+        ? `${t.hjaelper.emoji} ${t.hjaelper.navn}, hjælp lidt mere`
+        : `${t.hjaelper.emoji} ${t.hjaelper.navn}, sig bare svaret`
 
   const arkOverlay = visArk && togt.ark?.billede && (
     <ArkOverlay navn={togt.ark.navn} billede={togt.ark.billede} nr={phase === 'opgave' ? nrTekst(opgave.nr) : undefined} onClose={() => setVisArk(false)} />
@@ -146,11 +151,11 @@ export function TogtView({ togt, progress, startIndex, skipIntro, iDag, onResult
           {togt.ark && (
             <div className="ark-info">
               <p>
-                📄 Togtet følger arket <b>{togt.ark.navn}</b>. Hav det ved siden af, så du kan skrive svarene på papiret – appen viser nummeret på hver opgave.
+                📄 {t.rejsen[0].toUpperCase() + t.rejsen.slice(1)} følger arket <b>{togt.ark.navn}</b>. Hav det ved siden af, så du kan skrive svarene på papiret – appen viser nummeret på hver opgave.
               </p>
-              {togt.ark.kunPapir?.map((t) => (
-                <p className="muted small" key={t}>
-                  ✏️ Kun på papiret: {t}
+              {togt.ark.kunPapir?.map((k) => (
+                <p className="muted small" key={k}>
+                  ✏️ Kun på papiret: {k}
                 </p>
               ))}
               {togt.ark.billede && (
@@ -161,14 +166,14 @@ export function TogtView({ togt, progress, startIndex, skipIntro, iDag, onResult
             </div>
           )}
           <p className="muted">
-            {total} opgaver · {CONFIG.guldFoersteForsoeg} guldmønter for hvert rigtigt svar
+            {total} opgaver · {CONFIG.guldFoersteForsoeg} {t.valuta} for hvert rigtigt svar
           </p>
           <div className="btn-row">
             <button className="btn btn-ghost" onClick={onExit}>
               ← Tilbage
             </button>
             <button className="btn btn-primary btn-big" onClick={() => setPhase('opgave')}>
-              {startIndex > 0 ? 'Fortsæt togtet ⛵' : 'Sejl ud! ⛵'}
+              {startIndex > 0 ? t.fortsaetRejse : t.startRejse}
             </button>
           </div>
         </div>
@@ -181,28 +186,32 @@ export function TogtView({ togt, progress, startIndex, skipIntro, iDag, onResult
     return (
       <div className="page">
         <div className="card center">
-          <div className="big-emoji">💰</div>
-          <h1 className="title">Togtet er slut!</h1>
+          <div className="big-emoji">{t.menu.skat[0]}</div>
+          <h1 className="title">
+            {t.rejsen[0].toUpperCase() + t.rejsen.slice(1)} er slut!
+          </h1>
           <p className="intro">
-            Du tjente <b>{sessionGuld}</b> guldmønter på dette togt.
+            Du tjente <b>{sessionGuld}</b> {t.valuta} på dette {t.rejse}.
           </p>
           <p className="muted">
-            I pungen nu: <Moent /> {progress.pung} · Begravet: <Moent /> {progress.skat}
+            I {t.pung} nu: <Moent /> {progress.pung} · {t.gemt}: <Moent /> {progress.skat}
           </p>
           {progress.pung > 0 && (
-            <p className="intro">Guldet i pungen er ikke sikkert, før det er begravet. Ro i land og grav det ned!</p>
+            <p className="intro">
+              {t.valuta[0].toUpperCase() + t.valuta.slice(1)} i {t.pung} er ikke sikre, før de er gemt. {t.gemTitel}!
+            </p>
           )}
           <p className="muted small">Skal svarene over på arket? Oversigten viser facit og hvordan du fandt dem.</p>
           <div className="btn-row">
             <button className="btn btn-ghost" onClick={onExit}>
-              Tilbage til søkortet 🗺️
+              Tilbage til forsiden 🗺️
             </button>
             <button className="btn btn-ghost" onClick={onOversigt}>
               Se oversigten 📋
             </button>
             {progress.pung > 0 && (
               <button className="btn btn-primary btn-big" onClick={onBegrav}>
-                Begrav guldet ⛏️
+                {t.gemKnap}
               </button>
             )}
           </div>
@@ -215,13 +224,13 @@ export function TogtView({ togt, progress, startIndex, skipIntro, iDag, onResult
     <div className="page">
       <header className="topbar">
         <button className="btn btn-ghost btn-small" onClick={onExit}>
-          ← Søkort
+          ← {t.kortNavn}
         </button>
         <div className="topbar-title">
           {togt.emoji} {togt.title}
         </div>
         <div className="pills">
-          <div className="coins" title="Guld i pungen">
+          <div className="coins" title={`${t.valuta} i ${t.pung}`}>
             <Moent /> {progress.pung}
           </div>
           <div className="pill" title="Matematik i dag">
@@ -275,12 +284,18 @@ export function TogtView({ togt, progress, startIndex, skipIntro, iDag, onResult
 
         {hints.slice(0, hintLevel).map((h, i) => (
           <div className="hint" key={i}>
-            <b>🦜 Polly siger{i > 0 ? ' også' : ''}:</b> {h}
+            <b>
+              {t.hjaelper.emoji} {t.hjaelper.navn} siger{i > 0 ? ' også' : ''}:
+            </b>{' '}
+            {h}
           </div>
         ))}
         {pollyComment && (
           <div className="hint hint-polly">
-            <b>🦜 Polly:</b> {pollyComment} <b>{answerText(opgave)}</b>
+            <b>
+              {t.hjaelper.emoji} {t.hjaelper.navn}:
+            </b>{' '}
+            {pollyComment} <b>{answerText(opgave)}</b>
           </div>
         )}
 
@@ -294,7 +309,7 @@ export function TogtView({ togt, progress, startIndex, skipIntro, iDag, onResult
 
         {status !== 'open' && (
           <button ref={nextBtn} className="btn btn-primary btn-big" onClick={next}>
-            {index + 1 >= total ? 'Afslut togtet 🏁' : 'Videre ⛵'}
+            {index + 1 >= total ? `Afslut ${t.rejsen} 🏁` : t.videre}
           </button>
         )}
       </div>

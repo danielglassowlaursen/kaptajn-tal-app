@@ -17,6 +17,12 @@ export const TEMAER: Record<string, TemaBeskrivelse> = {
     hjaelper: 'papegøjen Polly',
     valuta: 'guldmønter',
   },
+  prinsesse: {
+    navn: 'Enhjørninger og prinsesser',
+    univers: 'prinsesser, enhjørninger, slotte, tårne, rosenhaver, kroner, ædelsten, feer og venlige drager',
+    hjaelper: 'enhjørningen Luna',
+    valuta: 'ædelsten',
+  },
 }
 
 export function systemPrompt(tema: TemaBeskrivelse): string {
@@ -45,10 +51,10 @@ Historier og hints:
 - Hjælperen hedder ${tema.hjaelper}. Belønningen er ${tema.valuta}.
 - "hint_1" er et lille skub: hvilken regningsart, eller hvad man skal kigge efter.
 - "hint_2" giver metoden og første skridt, men må ALDRIG indeholde facit eller regne opgaven helt færdig. Barnet skal selv tage det sidste skridt.
-- Skriv på dansk, enkelt og venligt. Ingen vold ud over almindelig piratleg, ingen skræmmende detaljer.
+- Skriv på dansk, enkelt og venligt. Ingen vold, ingen skræmmende detaljer.
 
 Togtet:
-- "titel" er et kort, fantasifuldt stednavn i universet (fx "Hajbugten"). "emoji" er én passende emoji. "intro" er 1–2 sætninger, der sætter scenen.
+- "titel" er et kort, fantasifuldt stednavn i universet (fx "Hajbugten" eller "Rosenslottet"). "emoji" er én passende emoji. "intro" er 1–2 sætninger, der sætter scenen.
 - "ark_navn" er arkets titel, som den står på arket, eller tom tekst.
 
 Ærlighed:

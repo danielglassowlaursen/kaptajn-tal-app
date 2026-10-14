@@ -1,6 +1,7 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { FEST_EVENT, type Fest } from '../lib/fest'
 import { Moent } from './Moent'
+import { useTema, type Tema } from '../tema'
 
 interface Partikel {
   id: number
@@ -13,15 +14,12 @@ interface Udbrud {
   partikler: Partikel[]
 }
 
-// 'moent' tegnes som SVG-guldmønt (emoji-mønten er grå på nogle enheder).
-const GULD = ['moent', 'moent', 'moent', '💰', '⭐', '✨', '💎']
-const STOR = [...GULD, '🏴‍☠️', '🦜', '⚓', '🏝️', '🗺️', '⚔️']
 
 let naesteId = 1
 
-function lavUdbrud(type: Fest): Udbrud {
+function lavUdbrud(type: Fest, tema: Tema): Udbrud {
   const antal = type === 'stor' ? 90 : 36
-  const tegn = type === 'stor' ? STOR : GULD
+  const tegn = type === 'stor' ? tema.konfetti.stor : tema.konfetti.lille
   const partikler: Partikel[] = []
   for (let i = 0; i < antal; i++) {
     const vinkel = Math.random() * Math.PI * 2
@@ -49,13 +47,16 @@ function lavUdbrud(type: Fest): Udbrud {
 /** Fast lag over hele skærmen, der viser konfetti-udbrud fra fest(). */
 export function KonfettiLag() {
   const [udbrud, setUdbrud] = useState<Udbrud[]>([])
+  const tema = useTema()
+  const temaRef = useRef(tema)
+  temaRef.current = tema
 
   useEffect(() => {
     const reduceret = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
     const onFest = (e: Event) => {
       if (reduceret) return
       const type = (e as CustomEvent<Fest>).detail
-      const u = lavUdbrud(type)
+      const u = lavUdbrud(type, temaRef.current)
       setUdbrud((prev) => [...prev, u])
       window.setTimeout(() => setUdbrud((prev) => prev.filter((x) => x.id !== u.id)), 2600)
     }

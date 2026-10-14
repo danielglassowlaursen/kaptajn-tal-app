@@ -3,6 +3,7 @@ import { CONFIG } from '../config'
 import { parseNumber } from '../lib/check'
 import { useTidsTaeller } from './TogtView'
 import { fest } from '../lib/fest'
+import { useTema } from '../tema'
 
 interface Spm {
   a: number
@@ -28,6 +29,7 @@ interface Props {
 /** Polly hører dig i tabellerne. Forkerte svar kommer igen, til alle er rigtige. */
 export function TabelTraening({ onDone, onTick }: Props) {
   const maal = CONFIG.tabelSpoergsmaal
+  const t = useTema()
   const [koe, setKoe] = useState<Spm[]>(() => lavSpoergsmaal(maal))
   const [rigtige, setRigtige] = useState(0)
   const [v, setV] = useState('')
@@ -59,9 +61,11 @@ export function TabelTraening({ onDone, onTick }: Props) {
 
   return (
     <div className="card center drill">
-      <div className="big-emoji">🦜</div>
+      <div className="big-emoji">{t.hjaelper.emoji}</div>
       <h2 className="title">Tabel-træning</h2>
-      <p className="muted">Polly hører dig i tabellerne, før du må ro i land.</p>
+      <p className="muted">
+        {t.hjaelper.navn} hører dig i tabellerne, før du må {t.gaaTilGemmested}.
+      </p>
       <div className="progress drill-progress">
         <div className="progress-bar" style={{ width: `${(rigtige / maal) * 100}%` }} />
       </div>
@@ -91,7 +95,7 @@ export function TabelTraening({ onDone, onTick }: Props) {
         </>
       )}
       {fb && <div className={`feedback ${fb.ok ? 'feedback-ok' : 'feedback-retry'}`}>{fb.text}</div>}
-      {rigtige >= maal && <div className="feedback feedback-ok">Flot! Du er klar til at ro i land. ⛵</div>}
+      {rigtige >= maal && <div className="feedback feedback-ok">Flot! Nu må du {t.gaaTilGemmested}. ✨</div>}
     </div>
   )
 }
