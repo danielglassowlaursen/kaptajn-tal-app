@@ -6,7 +6,7 @@
 // ---------------------------------------------------------------------------
 import type { Togt } from '../types'
 
-export const togter: Togt[] = [
+export const DEMO_TOGTER: Togt[] = [
   {
     id: 'demo',
     title: 'Skildpaddeøen',
@@ -86,7 +86,5 @@ export const togter: Togt[] = [
   },
 ]
 
-/** Hjælper: find et togt ud fra id. */
-export function findTogt(id: string): Togt | undefined {
-  return togter.find((t) => t.id === id)
-}
+/** Id'er der er reserveret til indbyggede togter. */
+export const DEMO_IDS = new Set(DEMO_TOGTER.map((t) => t.id))

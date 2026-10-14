@@ -24,8 +24,13 @@ regneark fra skolen, så svarene nemt kan skrives over på papiret bagefter.
   sikkerhedskopi som fil.
 - **Lyd og konfetti** – kan slås fra.
 
-Appen leveres **uden opgaver**, bortset fra et lille prøvetogt. Scanning af egne ark med AI
-er på vej – se [ROADMAP.md](ROADMAP.md).
+Appen leveres **uden opgaver**, bortset fra et lille prøvetogt. Familier tilføjer deres egne
+togter, og hvert togt kan få et foto af det rigtige ark, så svarene let kan skrives over.
+
+- **I dag**: Tilføj et togt fra en JSON-fil. Formatet står i [docs/TOGT-FORMAT.md](docs/TOGT-FORMAT.md),
+  og der er et eksempel i [examples/](examples/eksempel-togt.json).
+- **På vej**: Scan arket med din egen AI-nøgle (Anthropic, OpenAI eller OpenRouter), gennemse
+  og ret, og gem som togt. Se [ROADMAP.md](ROADMAP.md).
 
 ## Kør lokalt
 
@@ -50,8 +55,9 @@ Gratis-planen hos Cloudflare rækker til en familie eller en skoleklasse.
 1. Log ind: `npx wrangler login`
 2. Opret databasen: `npx wrangler d1 create kaptajn-tal-app`
 3. Indsæt det udskrevne `database_id` i `wrangler.jsonc`.
-4. Opret tabellerne: `pnpm db:init`
-5. Udgiv: `pnpm deploy`
+4. Opret lageret til arkfotos: `npx wrangler r2 bucket create kaptajn-tal-app-ark`
+5. Opret tabellerne: `pnpm db:init`
+6. Udgiv: `pnpm deploy`
 
 Har du flere Cloudflare-konti, så sæt `CLOUDFLARE_ACCOUNT_ID` før kommandoerne.
 
@@ -62,7 +68,8 @@ Lydfilerne er ikke med i repoet. Læg dine egne MP3-filer i `public/lyd/` som `p
 
 ## Teknik
 
-React + TypeScript + Vite. Cloudflare Worker med D1 til synk og historik. Ingen konti og
+React + TypeScript + Vite. Cloudflare Worker med D1 til familier, fremgang, togter og historik,
+og R2 til arkfotos, som kun kan hentes med familiekoden. Ingen konti og
 ingen tracking – kun barnets fornavn gemmes.
 
 ## Licens

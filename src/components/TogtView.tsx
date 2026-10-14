@@ -132,7 +132,7 @@ export function TogtView({ togt, progress, startIndex, skipIntro, iDag, onResult
   const pollyLabel =
     hintLevel === 0 ? '🦜 Spørg Polly om et hint' : hintLevel < hints.length ? '🦜 Polly, hjælp lidt mere' : '🦜 Polly, sig bare svaret'
 
-  const arkOverlay = visArk && togt.ark && (
+  const arkOverlay = visArk && togt.ark?.billede && (
     <ArkOverlay navn={togt.ark.navn} billede={togt.ark.billede} nr={phase === 'opgave' ? nrTekst(opgave.nr) : undefined} onClose={() => setVisArk(false)} />
   )
 
@@ -153,9 +153,11 @@ export function TogtView({ togt, progress, startIndex, skipIntro, iDag, onResult
                   ✏️ Kun på papiret: {t}
                 </p>
               ))}
-              <button className="btn btn-ghost btn-small" onClick={() => setVisArk(true)}>
-                Vis arket
-              </button>
+              {togt.ark.billede && (
+                <button className="btn btn-ghost btn-small" onClick={() => setVisArk(true)}>
+                  Vis arket
+                </button>
+              )}
             </div>
           )}
           <p className="muted">
@@ -236,11 +238,16 @@ export function TogtView({ togt, progress, startIndex, skipIntro, iDag, onResult
             Opgave {index + 1} af {total}
             {isReplay && <span className="replay-badge">Øvelse</span>}
           </div>
-          {togt.ark && (
-            <button className="papir-badge" onClick={() => setVisArk(true)} title="Vis arket">
-              📄 {togt.ark.navn} · {nrTekst(opgave.nr)}
-            </button>
-          )}
+          {togt.ark &&
+            (togt.ark.billede ? (
+              <button className="papir-badge" onClick={() => setVisArk(true)} title="Vis arket">
+                📄 {togt.ark.navn} · {nrTekst(opgave.nr)}
+              </button>
+            ) : (
+              <span className="papir-badge papir-badge-tekst">
+                📄 {togt.ark.navn} · {nrTekst(opgave.nr)}
+              </span>
+            ))}
         </div>
 
         <p className="story">

@@ -1,0 +1,41 @@
+{
+  "app": "kaptajn-tal",
+  "type": "togt",
+  "version": 1,
+  "togt": {
+    "title": "Hajbugten",
+    "subtitle": "Eksempel",
+    "emoji": "🦈",
+    "intro": "Et kort eksempeltogt, der viser filformatet.",
+    "ark": { "navn": "Mit eget ark" },
+    "opgaver": [
+      {
+        "id": "o1",
+        "type": "tal",
+        "nr": 1,
+        "story": "Hajen har spist 12 fisk i formiddag og 9 fisk i eftermiddag.",
+        "question": "Hvor mange fisk har hajen spist i alt?",
+        "regnestykke": "12 + 9",
+        "answer": 21,
+        "hints": [
+          "Hajen spiser MERE om eftermiddagen. Skal du lægge sammen eller trække fra?",
+          "Læg først 8 til 12, så du når op på 20. Hvor meget er der så tilbage af de 9?"
+        ]
+      },
+      {
+        "id": "o2",
+        "type": "sammenlign",
+        "nr": 2,
+        "story": "To både fanger fisk. Hvilken båd har fanget flest?",
+        "question": "Sæt >, < eller = mellem bådene.",
+        "left": "3 · 5",
+        "right": "20 − 4",
+        "answer": "<",
+        "hints": [
+          "Regn hver båd ud for sig først.",
+          "Regn 3 · 5 ud og 20 − 4 ud. Gabet i > og < vender mod det største tal."
+        ]
+      }
+    ]
+  }
+}

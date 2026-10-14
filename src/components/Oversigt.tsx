@@ -1,10 +1,10 @@
 import type { Progress, Opgave, Svar, Togt } from '../types'
-import { togter } from '../data/togter'
 import { answerText } from '../lib/check'
 import { nrTekst } from './TogtView'
 
 interface Props {
   progress: Progress
+  togter: Togt[]
   /** Togt der skal være foldet ud fra start. */
   fokus?: string
   onStart: (togtId: string, startIndex: number) => void
@@ -39,7 +39,7 @@ function label(o: Opgave): string {
 }
 
 /** Siden "Oversigt": facit og hjælp pr. opgave, så svarene kan skrives over på arket bagefter. */
-export function Oversigt({ progress, fokus, onStart }: Props) {
+export function Oversigt({ progress, togter, fokus, onStart }: Props) {
   return (
     <div className="page">
       <h1 className="section-title">📋 Oversigt</h1>

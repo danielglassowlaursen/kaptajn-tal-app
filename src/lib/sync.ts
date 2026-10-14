@@ -3,9 +3,10 @@
 // Appen er lokal først: localStorage er altid opdateret, skyen er backup + synk.
 // ---------------------------------------------------------------------------
 import type { Progress } from '../types'
+import type { GemtTogt } from './togtStore'
 
 const KODE_KEY = 'kaptajn-tal-kode'
-export const KODE_RE = /^[a-z0-9æøå-]{6,32}$/
+export const KODE_RE = /^[a-z0-9æøå-]{6,40}$/
 
 export function getKode(): string | null {
   try {
@@ -28,15 +29,24 @@ export function normaliserKode(s: string): string {
   return s.trim().toLowerCase().replace(/\s+/g, '-')
 }
 
-const ORD = ['sortskæg', 'polly', 'kraken', 'guldø', 'sabel', 'kanon', 'anker', 'papegøje', 'galeon', 'skattekort', 'dublon', 'kompas']
+// Neutrale ord, så koden passer til alle temaer. Tre ord + tal giver ~10^9 muligheder.
+const ORD = [
+  'anker', 'bølge', 'kompas', 'stjerne', 'måne', 'sol', 'ø', 'skov', 'slot', 'raket', 'komet', 'planet',
+  'perle', 'krone', 'sabel', 'kort', 'tårn', 'drage', 'ugle', 'ræv', 'hval', 'skildpadde', 'papegøje', 'enhjørning',
+  'regnbue', 'lanterne', 'tromme', 'fløjte', 'kiste', 'nøgle', 'bro', 'fyrtårn', 'vulkan', 'sky', 'storm', 'stjerneskud',
+  'mønt', 'diamant', 'rubin', 'safir', 'smaragd', 'krystal', 'glimmer', 'gnist', 'flamme', 'frost', 'tåge', 'blæst',
+]
 
-/** Forslag til en ny kode, fx "kraken-482". */
+/** Forslag til en ny kode, fx "anker-komet-ugle-42". */
 export function lavKode(): string {
-  const ord = ORD[Math.floor(Math.random() * ORD.length)]
-  return `${ord}-${100 + Math.floor(Math.random() * 900)}`
+  const tal = new Uint32Array(4)
+  crypto.getRandomValues(tal)
+  const ord = [0, 1, 2].map((i) => ORD[tal[i] % ORD.length])
+  return `${ord.join('-')}-${10 + (tal[3] % 90)}`
 }
 
-const url = (kode: string) => `/api/progress/${encodeURIComponent(kode)}`
+const base = (kode: string) => `/api/f/${encodeURIComponent(kode)}`
+const url = (kode: string) => `${base(kode)}/progress`
 
 export type HentResultat = { status: 'fundet'; progress: Progress } | { status: 'tom' } | { status: 'fejl'; besked: string }
 
@@ -90,7 +100,7 @@ export interface HistorikPunkt {
 
 export async function hentHistorik(kode: string): Promise<{ status: 'ok'; historik: HistorikPunkt[] } | { status: 'fejl'; besked: string }> {
   try {
-    const r = await fetch(`${url(kode)}/historik`, { cache: 'no-store' })
+    const r = await fetch(`${base(kode)}/historik`, { cache: 'no-store' })
     if (!r.ok) return { status: 'fejl', besked: `Serveren svarede ${r.status}` }
     const j = (await r.json()) as { historik: HistorikPunkt[] }
     return { status: 'ok', historik: j.historik }
@@ -101,11 +111,65 @@ export async function hentHistorik(kode: string): Promise<{ status: 'ok'; histor
 
 export async function gendanFraHistorik(kode: string, id: number): Promise<{ status: 'ok'; progress: Progress } | { status: 'fejl'; besked: string }> {
   try {
-    const r = await fetch(`${url(kode)}/gendan`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id }) })
+    const r = await fetch(`${base(kode)}/gendan`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id }) })
     if (!r.ok) return { status: 'fejl', besked: `Serveren svarede ${r.status}` }
     const j = (await r.json()) as { progress: Progress }
     return { status: 'ok', progress: j.progress }
   } catch {
     return { status: 'fejl', besked: 'Ingen forbindelse' }
+  }
+}
+
+// ------------------------------------------------------------ togter + arkfotos
+
+export async function hentTogterCloud(kode: string): Promise<{ status: 'ok'; togter: GemtTogt[] } | { status: 'fejl'; besked: string }> {
+  try {
+    const r = await fetch(`${base(kode)}/togter`, { cache: 'no-store' })
+    if (!r.ok) return { status: 'fejl', besked: `Serveren svarede ${r.status}` }
+    const j = (await r.json()) as { togter: { id: string; togt: GemtTogt['togt']; updatedAt: number; slettet: boolean }[] }
+    return {
+      status: 'ok',
+      togter: j.togter.map((t) => ({ togt: { ...t.togt, id: t.id }, updatedAt: t.updatedAt, oprettet: t.togt.oprettet ?? t.updatedAt, slettet: t.slettet })),
+    }
+  } catch {
+    return { status: 'fejl', besked: 'Ingen forbindelse' }
+  }
+}
+
+export async function gemTogtCloud(kode: string, g: GemtTogt): Promise<{ status: 'ok' } | { status: 'nyere'; gemt: GemtTogt } | { status: 'fejl' }> {
+  try {
+    const r = await fetch(`${base(kode)}/togter/${encodeURIComponent(g.togt.id)}`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ togt: { ...g.togt, oprettet: g.oprettet }, updatedAt: g.updatedAt, slettet: !!g.slettet }),
+    })
+    if (r.status === 409) {
+      const j = (await r.json()) as { id: string; togt: GemtTogt['togt']; updatedAt: number; slettet: boolean }
+      return { status: 'nyere', gemt: { togt: { ...j.togt, id: j.id }, updatedAt: j.updatedAt, oprettet: j.togt.oprettet ?? j.updatedAt, slettet: j.slettet } }
+    }
+    return r.ok ? { status: 'ok' } : { status: 'fejl' }
+  } catch {
+    return { status: 'fejl' }
+  }
+}
+
+export const arkUrl = (kode: string, togtId: string) => `${base(kode)}/ark/${encodeURIComponent(togtId)}`
+
+export async function uploadArk(kode: string, togtId: string, blob: Blob): Promise<string | null> {
+  try {
+    const r = await fetch(arkUrl(kode, togtId), { method: 'PUT', headers: { 'content-type': blob.type || 'image/jpeg' }, body: blob })
+    if (r.ok) return null
+    const j = (await r.json().catch(() => ({}))) as { fejl?: string }
+    return j.fejl ?? `Serveren svarede ${r.status}`
+  } catch {
+    return 'Ingen forbindelse'
+  }
+}
+
+export async function sletArk(kode: string, togtId: string): Promise<void> {
+  try {
+    await fetch(arkUrl(kode, togtId), { method: 'DELETE' })
+  } catch {
+    /* ignorer */
   }
 }

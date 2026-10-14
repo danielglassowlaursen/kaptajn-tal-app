@@ -114,11 +114,18 @@ export interface Togt {
   /** Det fysiske regneark, togtet bygger på. */
   ark?: {
     navn: string
-    billede: string
+    /** Adresse på fotoet af arket. For familiens egne togter sættes den af appen ud fra 'foto'. */
+    billede?: string
+    /** Der ligger et foto af arket i skyen under familien. */
+    foto?: boolean
+    /** Version af fotoet (tidspunkt for upload), så et nyt foto ikke vises fra cache. */
+    fotoV?: number
     /** Opgaver der kun findes på papiret (fx tegneopgaver). */
     kunPapir?: string[]
   }
   opgaver: Opgave[]
+  /** Hvornår familien tilføjede togtet (ms). Sættes af appen. */
+  oprettet?: number
 }
 
 /** Hvordan en opgave blev løst første gang. */

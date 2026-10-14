@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import type { Progress } from '../types'
+import type { GemtTogt } from '../lib/togtStore'
 import { KODE_RE, hentHistorik, lavKode, normaliserKode, type HistorikPunkt, type SyncState } from '../lib/sync'
 
 export type ForbindResultat = { status: 'oprettet' } | { status: 'hentet' } | { status: 'konflikt'; cloud: Progress } | { status: 'fejl'; besked: string }
@@ -11,7 +12,7 @@ interface Props {
   onLoes: (valg: 'hent' | 'behold', kode: string, cloud: Progress) => void
   onAfbryd: () => void
   onEksport: () => void
-  onImport: (p: Progress) => void
+  onImport: (p: Progress, togter?: GemtTogt[]) => void
   /** Gendan et historikpunkt. Returnerer fejlbesked eller null. */
   onGendan: (id: number) => Promise<string | null>
 }
@@ -24,13 +25,14 @@ function datoTid(ms: number) {
   return new Date(ms).toLocaleString('da-DK', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 }
 
-/** Accepterer både en rå Progress og API-/eksportformatet { progress }. */
-function parseKopi(text: string): Progress | null {
+/** Accepterer både en rå Progress og eksportformatet { progress, togter? }. */
+function parseKopi(text: string): { p: Progress; togter?: GemtTogt[] } | null {
   try {
     const j = JSON.parse(text)
     const p = j && typeof j === 'object' && 'progress' in j ? j.progress : j
     if (!p || typeof p !== 'object' || typeof p.togter !== 'object') return null
-    return p as Progress
+    const togter = Array.isArray(j?.egneTogter) ? (j.egneTogter as GemtTogt[]) : undefined
+    return { p: p as Progress, togter }
   } catch {
     return null
   }
@@ -68,14 +70,15 @@ export function FamilieKode({ kode, sync, onForbind, onLoes, onAfbryd, onEksport
     const f = e.target.files?.[0]
     e.target.value = ''
     if (!f) return
-    const p = parseKopi(await f.text())
-    if (!p) {
+    const kopi = parseKopi(await f.text())
+    if (!kopi) {
       setBesked('Filen ligner ikke en kopi fra Kaptajn Tal.')
       return
     }
+    const p = kopi.p
     const loest = Object.values(p.togter).reduce((n, t) => n + Object.keys(t.done ?? {}).length, 0)
     if (!window.confirm(`Hent kopien ind? (${p.skat ?? 0} begravet, ${p.pung ?? 0} i pungen, ${loest} løst). Den erstatter skatten på denne enhed${kode ? ' og i skyen' : ''}.`)) return
-    onImport(p)
+    onImport(p, kopi.togter)
     setBesked('Kopien er hentet ind.')
   }
   const [input, setInput] = useState('')

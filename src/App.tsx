@@ -1,10 +1,26 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import type { Gravested, Progress } from './types'
-import { findTogt } from './data/togter'
+import type { Gravested, Progress, Togt } from './types'
+import { DEMO_IDS, DEMO_TOGTER } from './data/togter'
+import { flet, loadTogter, nytTogtId, saveTogter, synlige, type GemtTogt, type TogtLager } from './lib/togtStore'
+import { downloadFil, filnavn, parseTogtFil, togtTilFil } from './lib/togtFil'
+import { komprimer } from './lib/billede'
+import { MineTogter } from './components/MineTogter'
 import { erTom, loadProgress, saveProgress, TOM_PROGRESS } from './lib/progress'
 import { begrav, bogfoer, evaluerDage, tilfoejTid, type Resultat } from './lib/spil'
 import { dagKey } from './lib/dato'
-import { gemCloud, gendanFraHistorik, getKode, hentCloud, setKode as gemKodeLokalt, type SyncState } from './lib/sync'
+import {
+  arkUrl,
+  gemCloud,
+  gemTogtCloud,
+  gendanFraHistorik,
+  getKode,
+  hentCloud,
+  hentTogterCloud,
+  setKode as gemKodeLokalt,
+  sletArk,
+  uploadArk,
+  type SyncState,
+} from './lib/sync'
 import { Home } from './components/Home'
 import { Skat } from './components/Skat'
 import { Besaetning } from './components/Besaetning'
@@ -31,7 +47,7 @@ type Screen =
 function screenFromUrl(): Screen {
   const q = new URLSearchParams(window.location.search)
   const togtId = q.get('togt')
-  if (!togtId || !findTogt(togtId)) return { kind: 'home' }
+  if (!togtId || !(DEMO_IDS.has(togtId) || togtId in loadTogter())) return { kind: 'home' }
   const i = Math.max(1, Number(q.get('i') ?? '1')) - 1
   return { kind: 'togt', togtId, startIndex: i, skipIntro: true }
 }
@@ -52,6 +68,9 @@ export default function App() {
   const [klar, setKlar] = useState(false)
   const [genindlaeser, setGenindlaeser] = useState(false)
   const [lyd, setLyd] = useState(() => lydTil())
+  const [lager, setLager] = useState<TogtLager>(() => loadTogter())
+  const lagerRef = useRef(lager)
+  lagerRef.current = lager
 
   // Seneste værdier i refs, så tidstæller, timere og event-handlere aldrig arbejder på en gammel kopi.
   const ref = useRef(progress)
@@ -114,12 +133,38 @@ export default function App() {
     }
   }
 
+  // ------------------------------------------------------------ togter
+  function saetLager(l: TogtLager) {
+    lagerRef.current = l
+    setLager(l)
+    saveTogter(l)
+  }
+
+  /** Gem ét togt lokalt og send det op, hvis der er en familiekode. */
+  async function gemTogt(g: GemtTogt) {
+    saetLager({ ...lagerRef.current, [g.togt.id]: g })
+    const k = kodeRef.current
+    if (!k) return
+    const r = await gemTogtCloud(k, g)
+    if (r.status === 'nyere') saetLager({ ...lagerRef.current, [r.gemt.togt.id]: r.gemt })
+  }
+
+  /** Hent togter fra skyen og flet dem med de lokale. */
+  async function synkTogter(k: string) {
+    const r = await hentTogterCloud(k)
+    if (r.status !== 'ok') return
+    const { lager: nyt, skalOp } = flet(lagerRef.current, r.togter)
+    saetLager(nyt)
+    for (const g of skalOp) void gemTogtCloud(k, g)
+  }
+
   // Ved start: hent skyens version, hvis den er nyere – ellers send vores op.
   useEffect(() => {
     let aktiv = true
     ;(async () => {
       const k = kodeRef.current
       if (k) {
+        void synkTogter(k)
         const r = await hentCloud(k)
         if (!aktiv) return
         if (r.status === 'fundet') {
@@ -212,6 +257,7 @@ export default function App() {
   async function forbind(k: string): Promise<ForbindResultat> {
     const r = await hentCloud(k)
     if (r.status === 'fejl') return { status: 'fejl', besked: r.besked }
+    void synkTogter(k)
     if (r.status === 'tom') {
       aktiverKode(k)
       update({ ...ref.current }) // nyt stempel → sendes op
@@ -245,7 +291,8 @@ export default function App() {
   function eksporter() {
     const p = ref.current
     const navn = (p.name || 'kaptajn').toLowerCase().replace(/[^a-zæøå0-9]+/g, '-')
-    const indhold = JSON.stringify({ app: 'kaptajn-tal', version: 1, eksporteret: new Date().toISOString(), progress: p }, null, 2)
+    const egneTogter = Object.values(lagerRef.current).filter((g) => !g.slettet)
+    const indhold = JSON.stringify({ app: 'kaptajn-tal', version: 2, eksporteret: new Date().toISOString(), progress: p, egneTogter }, null, 2)
     const blob = new Blob([indhold], { type: 'application/json' })
     const href = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -257,8 +304,9 @@ export default function App() {
     window.setTimeout(() => URL.revokeObjectURL(href), 1000)
   }
 
-  function importer(p: Progress) {
+  function importer(p: Progress, togter?: GemtTogt[]) {
     update({ ...TOM_PROGRESS, ...p }) // nyt stempel → vinder i skyen
+    for (const g of togter ?? []) void gemTogt({ ...g, updatedAt: Date.now() })
     addToasts(['📂 Kopien er hentet ind.'])
   }
 
@@ -272,6 +320,55 @@ export default function App() {
     setSync({ status: 'ok', sidst: Date.now() })
     addToasts(['🕘 Skatten er gendannet.'])
     return null
+  }
+
+  function tilfoejTogtFraFil(text: string): { ok: boolean; besked: string } {
+    const r = parseTogtFil(text)
+    if (!r.ok) return { ok: false, besked: 'Filen kunne ikke bruges: ' + r.fejl.slice(0, 4).join(' · ') }
+    const optaget = new Set([...DEMO_IDS, ...Object.keys(lagerRef.current)])
+    const nu = Date.now()
+    r.togter.forEach((t, i) => {
+      const id = t.id && !optaget.has(t.id) && /^[a-z0-9-]{1,64}$/.test(t.id) ? t.id : nytTogtId(optaget)
+      optaget.add(id)
+      void gemTogt({ togt: { ...t, id, ark: t.ark ? { ...t.ark, foto: false } : undefined }, updatedAt: nu + i, oprettet: nu + i })
+    })
+    const navne = r.togter.map((t) => `"${t.title}"`).join(', ')
+    const adv = r.advarsler.length ? ` Bemærk: ${r.advarsler.slice(0, 3).join(' · ')}` : ''
+    return { ok: true, besked: `Tilføjet: ${navne}.${adv}` }
+  }
+
+  function eksporterTogt(t: Togt) {
+    downloadFil(`kaptajn-tal-togt-${filnavn(t.title)}.json`, togtTilFil(t))
+  }
+
+  function sletTogt(t: Togt) {
+    const g = lagerRef.current[t.id]
+    if (!g) return
+    void gemTogt({ ...g, slettet: true, updatedAt: Date.now() })
+    addToasts([`🗑 "${t.title}" er slettet.`])
+  }
+
+  async function gemFoto(t: Togt, fil: File): Promise<string | null> {
+    const k = kodeRef.current
+    if (!k) return 'Arkfotos kræver en familiekode.'
+    let blob: Blob
+    try {
+      blob = await komprimer(fil)
+    } catch {
+      return 'Billedet kunne ikke læses.'
+    }
+    const fejl = await uploadArk(k, t.id, blob)
+    if (fejl) return fejl
+    const g = lagerRef.current[t.id]
+    if (g) void gemTogt({ ...g, togt: { ...g.togt, ark: { navn: g.togt.ark?.navn ?? g.togt.title, kunPapir: g.togt.ark?.kunPapir, foto: true, fotoV: Date.now() } }, updatedAt: Date.now() })
+    return null
+  }
+
+  function fjernFoto(t: Togt) {
+    const k = kodeRef.current
+    if (k) void sletArk(k, t.id)
+    const g = lagerRef.current[t.id]
+    if (g?.togt.ark) void gemTogt({ ...g, togt: { ...g.togt, ark: { ...g.togt.ark, foto: false } }, updatedAt: Date.now() })
   }
 
   async function genindlaes() {
@@ -294,6 +391,24 @@ export default function App() {
     <FamilieKode kode={kode} sync={sync} onForbind={forbind} onLoes={loes} onAfbryd={afbryd} onEksport={eksporter} onImport={importer} onGendan={gendan} />
   )
 
+  const egneTogter = synlige(lager)
+  const alleTogter: Togt[] = [...DEMO_TOGTER, ...egneTogter].map((t) =>
+    t.ark?.foto && kode ? { ...t, ark: { ...t.ark, billede: `${arkUrl(kode, t.id)}?v=${t.ark.fotoV ?? 0}` } } : t,
+  )
+  const findTogt = (id: string) => alleTogter.find((t) => t.id === id)
+
+  const mineTogterKort: ReactNode = (
+    <MineTogter
+      togter={egneTogter}
+      harKode={!!kode}
+      onTilfoejFil={tilfoejTogtFraFil}
+      onEksport={eksporterTogt}
+      onSlet={sletTogt}
+      onFoto={gemFoto}
+      onFjernFoto={fjernFoto}
+    />
+  )
+
   let content
   if (screen.kind === 'togt' && findTogt(screen.togtId)) {
     const togt = findTogt(screen.togtId)!
@@ -313,7 +428,7 @@ export default function App() {
       />
     )
   } else if (screen.kind === 'oversigt') {
-    content = <Oversigt progress={progress} fokus={screen.togtId} onStart={(togtId, startIndex) => setScreen({ kind: 'togt', togtId, startIndex })} />
+    content = <Oversigt progress={progress} togter={alleTogter} fokus={screen.togtId} onStart={(togtId, startIndex) => setScreen({ kind: 'togt', togtId, startIndex })} />
   } else if (screen.kind === 'begrav') {
     content = <Begrav pung={progress.pung} onTick={tick} onBegrav={begravNu} onExit={() => setScreen({ kind: 'home' })} />
   } else if (screen.kind === 'skat') {
@@ -324,7 +439,9 @@ export default function App() {
     content = (
       <Home
         progress={progress}
+        togter={alleTogter}
         kodeKort={kodeKort}
+        mineTogter={mineTogterKort}
         onName={(name) => update({ ...progress, name })}
         onStart={(togtId, startIndex) => setScreen({ kind: 'togt', togtId, startIndex })}
         onOversigt={(togtId) => setScreen({ kind: 'oversigt', togtId })}

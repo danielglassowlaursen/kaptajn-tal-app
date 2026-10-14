@@ -18,5 +18,12 @@
       "database_id": "INDSÆT-DIT-DATABASE-ID"
     }
   ],
+  "r2_buckets": [
+    {
+      "binding": "ARK",
+      // Opret med: npx wrangler r2 bucket create kaptajn-tal-app-ark
+      "bucket_name": "kaptajn-tal-app-ark"
+    }
+  ],
   "observability": { "enabled": true }
 }

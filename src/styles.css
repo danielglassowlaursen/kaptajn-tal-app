@@ -1258,3 +1258,27 @@ input {
     grid-column: 1 / -1;
   }
 }
+
+/* ------------------------------------------------------------------ dine togter */
+.mine-togter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mit-togt {
+  background: #fff8e6;
+  border: 1.5px solid var(--parchment-3);
+  border-radius: 10px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.togt-empty {
+  color: var(--parchment);
+  margin: 0;
+}
+.papir-badge-tekst {
+  cursor: default;
+  text-decoration: none;
+}

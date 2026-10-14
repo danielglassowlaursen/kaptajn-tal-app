@@ -1,19 +1,20 @@
 import type { ReactNode } from 'react'
-import type { Progress } from '../types'
-import { togter } from '../data/togter'
+import type { Progress, Togt } from '../types'
 import { doneIds, togtCoins } from '../lib/progress'
 import { Moent } from './Moent'
 
 interface Props {
   progress: Progress
+  togter: Togt[]
   kodeKort?: ReactNode
+  mineTogter?: ReactNode
   onName: (name: string) => void
   onStart: (togtId: string, startIndex: number) => void
   onOversigt: (togtId: string) => void
 }
 
 /** Forsiden: hilsen + togter. Skat og besætning har deres egne sider i topmenuen. */
-export function Home({ progress, kodeKort, onName, onStart, onOversigt }: Props) {
+export function Home({ progress, togter, kodeKort, mineTogter, onName, onStart, onOversigt }: Props) {
   const name = progress.name.trim()
   return (
     <div className="page">
@@ -31,6 +32,8 @@ export function Home({ progress, kodeKort, onName, onStart, onOversigt }: Props)
       </div>
 
       {kodeKort}
+
+      {mineTogter}
 
       <h2 className="section-title">Vælg et togt</h2>
       <div className="togt-list">
