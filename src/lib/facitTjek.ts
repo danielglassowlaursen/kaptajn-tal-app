@@ -4,7 +4,7 @@
 // ---------------------------------------------------------------------------
 import type { Opgave } from '../types'
 import { tjekOpgave } from './togtFil'
-import { afrund, ensUdtryk, loeserLigning, regnUd as motorRegnUd } from './matematik'
+import { afrund, loeserLigning, regnUd as motorRegnUd } from './matematik'
 import { formatNumber } from './check'
 
 export interface Fund {
@@ -54,39 +54,7 @@ function facitTekster(o: Opgave): string[] {
 export function tjekUdkast(o: Opgave, nr: number, usikker?: string): Fund[] {
   const fund: Fund[] = tjekOpgave(o as unknown as Record<string, unknown>, nr).map((tekst) => ({ niveau: 'fejl' as const, tekst }))
   if (usikker) fund.push({ niveau: 'advarsel', tekst: `AI'en var usikker: ${usikker}` })
-  const r = o.regnestykke
-
-  if (o.type === 'tal' && r && Number.isFinite(o.answer)) {
-    if (facitFraRegnestykke(r, o.answer, o.decimaler) === false) fund.push({ niveau: 'advarsel', tekst: `Facit ${formatNumber(o.answer)} passer ikke med regnestykket "${r}". Tjek det.` })
-  }
-  if (o.type === 'flere' && r && r.includes('=')) {
-    const v = variabelI(r)
-    const forkerte = o.answers.filter((a) => loeserLigning(r, a, v) === false)
-    if (forkerte.length) fund.push({ niveau: 'advarsel', tekst: `${forkerte.map(formatNumber).join(' og ')} passer ikke i ligningen "${r}". Tjek facit.` })
-    if (o.answers.length === 0) fund.push({ niveau: 'advarsel', tekst: 'Facit er "ingen løsning". Tjek, at det er rigtigt.' })
-  }
-  if (o.type === 'broek' && r && !r.includes('=')) {
-    const v = regnUd(r)
-    if (v !== null && Math.abs(v - o.answer[0] / o.answer[1]) > 1e-9) fund.push({ niveau: 'advarsel', tekst: `Brøken ${o.answer[0]}/${o.answer[1]} passer ikke med "${r}".` })
-  }
-  if (o.type === 'udtryk' && r && !r.includes('=')) {
-    if (ensUdtryk(r, o.answer) === false) fund.push({ niveau: 'advarsel', tekst: `Udtrykket "${o.answer}" er ikke lig med "${r}". Tjek facit.` })
-  }
-  if (o.type === 'sammenlign') {
-    const a = regnUd(o.left)
-    const b = regnUd(o.right)
-    if (a !== null && b !== null) {
-      const rigtigt = a > b ? '>' : a < b ? '<' : '='
-      if (rigtigt !== o.answer) fund.push({ niveau: 'advarsel', tekst: `${o.left} = ${formatNumber(a)} og ${o.right} = ${formatNumber(b)}, så tegnet burde være "${rigtigt}".` })
-    }
-  }
-  if (o.type === 'sorter') {
-    const vaerdi = (x: string) => regnUd(x)
-    if (o.items.every((x) => vaerdi(x) !== null)) {
-      const forventet = [...o.items].sort((x, y) => vaerdi(x)! - vaerdi(y)!)
-      if (forventet.join('|') !== o.sorted.join('|')) fund.push({ niveau: 'advarsel', tekst: `Sorteringen ser forkert ud. Forventet: ${forventet.join(', ')}.` })
-    }
-  }
+  // Selve facit regnes efter i kontrol.ts (uafhængig kontrol). Her: validering, usikkerhed og hint-læk.
   if (o.type === 'felter' && o.answer > o.total) fund.push({ niveau: 'fejl', tekst: 'Flere felter i facit end i figuren.' })
 
   const h2 = (o.hints?.[1] ?? '').replace(/\s+/g, '')

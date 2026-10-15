@@ -19,6 +19,7 @@ function base(r: RaaOpgave, i: number) {
     story: r.historie,
     question: r.spoergsmaal,
     regnestykke: tekst(r.regnestykke),
+    udregning: tekst(r.udregning),
     hints: [r.hint_1, r.hint_2].filter((h) => h && h.trim()),
     papir: tekst(r.papir),
   }

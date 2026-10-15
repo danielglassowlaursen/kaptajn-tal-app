@@ -29,6 +29,10 @@ interface Base {
   nr?: number | number[]
   /** Note om hvordan svaret overføres til papiret, hvis det er anderledes end på skærmen. */
   papir?: string
+  /** Regnestykke eller ligning, appen selv kan regne facit ud fra (fx "2 · 60" for "2 timer = ? min"). Vises ikke for barnet. */
+  udregning?: string
+  /** Hvem har bekræftet facit: appen regnede efter, eller en voksen tjekkede mod arket. */
+  kontrol?: 'app' | 'voksen'
 }
 
 /** Skriv et tal. accept = alternative stavemåder der også er rigtige. */
@@ -165,6 +169,10 @@ export interface Svar {
   r: Resultat
   guld: number
   dato: string // 'YYYY-MM-DD'
+  /** Så meget tog tyven ved denne opgave (gives tilbage, hvis facit var forkert). */
+  stjal?: number
+  /** Barnet har meldt, at facit ser forkert ud. */
+  rapport?: { dato: string }
 }
 
 /** Gemmes i localStorage pr. togt. */

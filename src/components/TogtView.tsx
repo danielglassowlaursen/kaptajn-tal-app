@@ -23,6 +23,8 @@ interface Props {
   onTick: (sek: number) => void
   onBegrav: () => void
   onOversigt: () => void
+  /** Barnet melder forkert facit. Returnerer hvor meget der gives tilbage. */
+  onRapport: (opgaveId: string) => number
   onExit: () => void
 }
 
@@ -47,7 +49,7 @@ export function useTidsTaeller(aktiv: boolean, onTick: (sek: number) => void) {
   }, [aktiv])
 }
 
-export function TogtView({ togt, progress, startIndex, skipIntro, iDag, onResultat, onTick, onBegrav, onOversigt, onExit }: Props) {
+export function TogtView({ togt, progress, startIndex, skipIntro, iDag, onResultat, onTick, onBegrav, onOversigt, onRapport, onExit }: Props) {
   const t = useTema()
   const [phase, setPhase] = useState<Phase>(skipIntro ? 'opgave' : 'intro')
   const [index, setIndex] = useState(Math.min(startIndex, togt.opgaver.length - 1))
@@ -58,6 +60,7 @@ export function TogtView({ togt, progress, startIndex, skipIntro, iDag, onResult
   const [message, setMessage] = useState<Message | null>(null)
   const [sessionGuld, setSessionGuld] = useState(0)
   const [visArk, setVisArk] = useState(false)
+  const [rapporteret, setRapporteret] = useState<Set<string>>(new Set())
   // Var opgaven allerede løst, da den blev åbnet? (Låses ved start, så mærket ikke dukker op midt i opgaven.)
   const [replayIds] = useState(() => new Set(Object.keys(progress.togter[togt.id]?.done ?? {})))
   const nextBtn = useRef<HTMLButtonElement>(null)
@@ -312,6 +315,22 @@ export function TogtView({ togt, progress, startIndex, skipIntro, iDag, onResult
         )}
 
         {message && <div className={`feedback feedback-${message.kind}`}>{message.text}</div>}
+
+        {status === 'revealed' && !isReplay && !rapporteret.has(opgave.id) && (
+          <button
+            className="btn btn-ghost btn-small rapport-knap"
+            onClick={() => {
+              const tilbage = onRapport(opgave.id)
+              setRapporteret(new Set(rapporteret).add(opgave.id))
+              setMessage({
+                kind: 'polly',
+                text: `Tak! En voksen kigger på facit til denne opgave.${tilbage > 0 ? ` Du har fået dine ${tilbage} ${t.valuta} tilbage.` : ''}`,
+              })
+            }}
+          >
+            🚩 Jeg tror facit er forkert
+          </button>
+        )}
 
         {status !== 'open' && (
           <button ref={nextBtn} className="btn btn-primary btn-big" onClick={next}>

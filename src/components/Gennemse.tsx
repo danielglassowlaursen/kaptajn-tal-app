@@ -2,14 +2,68 @@ import { useMemo, useState } from 'react'
 import type { Opgave, Togt } from '../types'
 import { answerText } from '../lib/check'
 import { tjekUdkast, type Fund } from '../lib/facitTjek'
+import { kontrol, type Kontrol } from '../lib/kontrol'
 
 interface Props {
   togt: Togt
   usikre: Record<string, string>
   fotoUrls: string[]
-  forbrug: { prisUsd: number; inputTokens: number; outputTokens: number }
+  forbrug?: { prisUsd: number; inputTokens: number; outputTokens: number }
+  /** Overskrift – standard "Gennemse togtet". */
+  overskrift?: string
+  kasserTekst?: string
   onGem: (t: Togt) => void
   onKasser: () => void
+}
+
+/** Kontrol af én opgave; en voksens godkendelse vinder over appens "uenig" og "ukendt". */
+function kontrolAf(o: Opgave): Kontrol & { voksen?: boolean } {
+  const k = kontrol(o)
+  return o.kontrol === 'voksen' && k.status !== 'bekraeftet' ? { ...k, voksen: true } : k
+}
+
+function KontrolMaerke({ o, k, onChange }: { o: Opgave; k: Kontrol & { voksen?: boolean }; onChange: (o: Opgave) => void }) {
+  if (k.status === 'bekraeftet')
+    return (
+      <div className="kontrol kontrol-ok" title={k.hvordan}>
+        ✅ Regnet efter af appen<span className="muted small"> · {k.hvordan}</span>
+      </div>
+    )
+  if (k.voksen)
+    return (
+      <div className="kontrol kontrol-voksen">
+        ✋ Tjekket af dig mod arket{' '}
+        <button className="link-btn" onClick={() => onChange({ ...o, kontrol: undefined })}>
+          fortryd
+        </button>
+      </div>
+    )
+  if (k.status === 'uenig')
+    return (
+      <div className="kontrol kontrol-uenig">
+        <div>
+          ⛔ <b>Appen får et andet facit:</b> {k.appFacit ?? '?'} – AI'en siger {answerText(o)}.
+          {k.hvordan && <span className="muted small"> ({k.hvordan})</span>}
+        </div>
+        <div className="btn-row left">
+          {k.forslag && (
+            <button className="btn btn-primary btn-small" onClick={() => onChange({ ...k.forslag!, kontrol: undefined })}>
+              Brug appens facit
+            </button>
+          )}
+          <button className="btn btn-ghost btn-small" onClick={() => onChange({ ...o, kontrol: 'voksen' })}>
+            AI'en har ret – jeg har tjekket arket
+          </button>
+        </div>
+      </div>
+    )
+  return (
+    <label className="kontrol kontrol-ukendt">
+      <input type="checkbox" checked={false} onChange={() => onChange({ ...o, kontrol: 'voksen' })} />
+      ⚠️ Appen kan ikke regne denne efter. Tjek facit mod arket, og sæt flueben.
+      {k.hvordan && <span className="muted small"> ({k.hvordan})</span>}
+    </label>
+  )
 }
 
 const TYPENAVN: Record<Opgave['type'], string> = {
@@ -151,12 +205,17 @@ function FacitFelt({ o, onChange }: { o: Opgave; onChange: (o: Opgave) => void }
 }
 
 /** En voksen gennemser AI'ens udkast: ret tekster og facit, slet opgaver, og gem. */
-export function Gennemse({ togt: start, usikre, fotoUrls, forbrug, onGem, onKasser }: Props) {
+export function Gennemse({ togt: start, usikre, fotoUrls, forbrug, overskrift, kasserTekst, onGem, onKasser }: Props) {
   const [togt, setTogt] = useState<Togt>(start)
   const [visFoto, setVisFoto] = useState(0)
 
   const fund = useMemo(() => togt.opgaver.map((o, i) => tjekUdkast(o, i + 1, usikre[o.id])), [togt, usikre])
-  const fejl = fund.reduce((n, f) => n + f.filter((x) => x.niveau === 'fejl').length, 0)
+  const kontroller = useMemo(() => togt.opgaver.map(kontrolAf), [togt])
+  const uenige = kontroller.filter((k) => k.status === 'uenig' && !k.voksen).length
+  const appTjek = kontroller.filter((k) => k.status === 'bekraeftet').length
+  const voksenTjek = kontroller.filter((k) => k.voksen).length
+  const kunAi = kontroller.filter((k) => k.status === 'ukendt' && !k.voksen).length
+  const fejl = fund.reduce((n, f) => n + f.filter((x) => x.niveau === 'fejl').length, 0) + uenige
   const advarsler = fund.reduce((n, f) => n + f.filter((x) => x.niveau === 'advarsel').length, 0)
 
   const setOpgave = (i: number, o: Opgave) => setTogt({ ...togt, opgaver: togt.opgaver.map((x, j) => (j === i ? o : x)) })
@@ -170,13 +229,14 @@ export function Gennemse({ togt: start, usikre, fotoUrls, forbrug, onGem, onKass
 
   return (
     <div className="page page-wide">
-      <h1 className="section-title">🔍 Gennemse togtet</h1>
+      <h1 className="section-title">🔍 {overskrift ?? 'Gennemse togtet'}</h1>
       <p className="oversigt-intro">
         Tjek facit og tekster mod arket, før togtet gemmes. Gule markeringer er ting, appen eller AI'en er i tvivl om.
-        {forbrug.prisUsd > 0 && ` Scanningen kostede ca. ${(forbrug.prisUsd * 7).toFixed(2).replace('.', ',')} kr.`}
+        {forbrug && forbrug.prisUsd > 0 && ` Scanningen kostede ca. ${(forbrug.prisUsd * 7).toFixed(2).replace('.', ',')} kr.`}
       </p>
 
-      <div className="gennemse">
+      <div className={`gennemse ${fotoUrls.length === 0 ? 'uden-foto' : ''}`}>
+        {fotoUrls.length > 0 && (
         <aside className="gennemse-foto">
           {fotoUrls.length > 1 && (
             <div className="btn-row left">
@@ -189,6 +249,7 @@ export function Gennemse({ togt: start, usikre, fotoUrls, forbrug, onGem, onKass
           )}
           {fotoUrls[visFoto] && <img src={fotoUrls[visFoto]} alt="Arket" className="ark-img" />}
         </aside>
+        )}
 
         <div className="gennemse-liste">
           <div className="card">
@@ -227,7 +288,10 @@ export function Gennemse({ togt: start, usikre, fotoUrls, forbrug, onGem, onKass
           </div>
 
           {togt.opgaver.map((o, i) => (
-            <div className={`card udkast ${fund[i].some((f) => f.niveau === 'fejl') ? 'har-fejl' : fund[i].length ? 'har-advarsel' : ''}`} key={o.id}>
+            <div
+              className={`card udkast ${fund[i].some((f) => f.niveau === 'fejl') || (kontroller[i].status === 'uenig' && !kontroller[i].voksen) ? 'har-fejl' : fund[i].length || (kontroller[i].status === 'ukendt' && !kontroller[i].voksen) ? 'har-advarsel' : ''}`}
+              key={o.id}
+            >
               <div className="card-head">
                 <div className="card-meta">
                   {o.nr !== undefined ? `Nr. ${Array.isArray(o.nr) ? o.nr.join('+') : o.nr}` : 'Uden nr.'} · {TYPENAVN[o.type]}
@@ -261,8 +325,18 @@ export function Gennemse({ togt: start, usikre, fotoUrls, forbrug, onGem, onKass
               </div>
               <div className="felt-label">
                 Facit
-                <FacitFelt o={o} onChange={(n) => setOpgave(i, n)} />
+                <FacitFelt o={o} onChange={(n) => setOpgave(i, { ...n, kontrol: undefined })} />
               </div>
+              <label className="felt-label">
+                Udregning til appens kontrol <span className="muted small">(fx "2 · 60" – vises ikke for barnet)</span>
+                <input
+                  className="name-input"
+                  value={o.udregning ?? ''}
+                  placeholder="tom = appen bruger regnestykket"
+                  onChange={(e) => setOpgave(i, { ...o, udregning: e.target.value || undefined, kontrol: undefined })}
+                />
+              </label>
+              <KontrolMaerke o={o} k={kontroller[i]} onChange={(n) => setOpgave(i, n)} />
               <label className="felt-label">
                 Hint 1 (lille skub)
                 <input className="name-input" value={o.hints?.[0] ?? ''} onChange={(e) => setHint(i, 0, e.target.value)} />
@@ -279,18 +353,25 @@ export function Gennemse({ togt: start, usikre, fotoUrls, forbrug, onGem, onKass
               <b>{togt.opgaver.length} opgaver</b>
               <span className="muted small">
                 {' '}
-                · {fejl} fejl · {advarsler} advarsler
+                · ✅ {appTjek} regnet efter af appen · ✋ {voksenTjek} tjekket af dig · ⚠️ {kunAi} kun AI · {fejl} fejl · {advarsler} advarsler
               </span>
             </div>
             <div className="btn-row left">
-              <button className="btn btn-ghost" onClick={() => window.confirm('Kassér udkastet? Scanningen er allerede betalt.') && onKasser()}>
-                Kassér
+              <button className="btn btn-ghost" onClick={() => (kasserTekst ? onKasser() : window.confirm('Kassér udkastet? Scanningen er allerede betalt.') && onKasser())}>
+                {kasserTekst ?? 'Kassér'}
               </button>
-              <button className="btn btn-primary btn-big" disabled={fejl > 0 || togt.opgaver.length === 0 || !togt.title.trim()} onClick={() => onGem(togt)}>
+              <button className="btn btn-primary btn-big" disabled={fejl > 0 || togt.opgaver.length === 0 || !togt.title.trim()} onClick={() =>
+                  onGem({
+                    ...togt,
+                    opgaver: togt.opgaver.map((o, j) => (kontroller[j].status === 'bekraeftet' ? { ...o, kontrol: 'app' as const } : o)),
+                  })
+                }
+              >
                 Gem togtet ⛵
               </button>
             </div>
-            {fejl > 0 && <p className="muted small">Ret eller slet opgaverne med ⛔, før togtet kan gemmes.</p>}
+            {fejl > 0 && <p className="muted small">Ret eller slet opgaverne med ⛔, eller vælg facit, før togtet kan gemmes.</p>}
+            {fejl === 0 && kunAi > 0 && <p className="muted small">{kunAi} opgaver er ikke tjekket af appen eller dig. Du kan godt gemme, men tjek dem gerne mod arket.</p>}
           </div>
         </div>
       </div>

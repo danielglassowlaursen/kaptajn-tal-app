@@ -38,8 +38,42 @@ export function bogfoer(p: Progress, togtId: string, opgaveId: string, resultat:
     const r = stjael(next, CONFIG.tyveri, tema)
     next = r.p
     tyveri = r.tyveri
+    if (r.tyveri.taget > 0) {
+      const t = next.togter[togtId]
+      next = { ...next, togter: { ...next.togter, [togtId]: { ...t, svar: { ...t.svar, [opgaveId]: { ...svar, stjal: r.tyveri.taget } } } } }
+    }
   }
   return { p: next, guld, tyveri }
+}
+
+/** Barnet melder, at facit ser forkert ud: det, tyven tog, gives tilbage i pungen, og opgaven markeres. */
+export function rapporterFacit(p: Progress, togtId: string, opgaveId: string): { p: Progress; tilbage: number } {
+  const t = p.togter[togtId]
+  const svar = t?.svar?.[opgaveId]
+  if (!t || !svar || svar.rapport) return { p, tilbage: 0 }
+  const tilbage = svar.stjal ?? 0
+  return {
+    tilbage,
+    p: {
+      ...p,
+      pung: p.pung + tilbage,
+      stjaalet: Math.max(0, p.stjaalet - tilbage),
+      togter: { ...p.togter, [togtId]: { ...t, svar: { ...t.svar, [opgaveId]: { ...svar, stjal: 0, rapport: { dato: dagKey() } } } } },
+    },
+  }
+}
+
+/** Åbn opgaver igen (efter en voksen har rettet facit), så barnet kan løse dem og tjene igen. */
+export function aabnOpgaver(p: Progress, togtId: string, opgaveIds: string[]): Progress {
+  const t = p.togter[togtId]
+  if (!t || opgaveIds.length === 0) return p
+  const done = { ...t.done }
+  const svar = { ...(t.svar ?? {}) }
+  for (const id of opgaveIds) {
+    delete done[id]
+    delete svar[id]
+  }
+  return { ...p, togter: { ...p.togter, [togtId]: { done, svar } } }
 }
 
 /** Sorte Sven snupper guld – først fra den begravede skat, ellers fra pungen. */

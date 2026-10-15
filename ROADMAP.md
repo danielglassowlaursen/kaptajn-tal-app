@@ -10,6 +10,7 @@ Kaptajn Tal er ved at blive bygget om fra en familie-prototype til en app, alle 
 | 3 | Tema-system: Pirater, Prinsesse Plus (enhjørninger og prinsesser) | ✅ |
 | 4 | Tema 3: Kommandør Komma (rummet), onboarding, rate-limit, "Deploy to Cloudflare" | ✅ |
 | 4b | Udskoling: andengradsligninger, brøker, udtryk, afrunding, grafer, klassetrin, temaerne Detektiv, Sport og Flyt hjemmefra | ✅ |
+| 4c | Korrekte facit: uafhængig kontrol, mærker i gennemse, melding fra barnet, ret gemte togter, testsuite i CI | ✅ |
 | 5 | Valgfri betalt plan med hostet AI | Senere |
 
 ## Principper

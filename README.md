@@ -46,6 +46,21 @@ togter, og hvert togt kan få et foto af det rigtige ark, så svarene let kan sk
 - **Fra fil**: Tilføj et togt fra en JSON-fil. Formatet står i [docs/TOGT-FORMAT.md](docs/TOGT-FORMAT.md),
   og der er et eksempel i [examples/](examples/eksempel-togt.json).
 
+### Korrekte facit
+
+Et forkert facit er det værste, der kan ske, så facit tjekkes i flere lag:
+
+1. **Appen regner selv efter.** AI'en leverer en udregning til hver opgave, og appens egen
+   regnemotor regner den ud uafhængigt: regnestykker, ligninger (også alle rødder i
+   andengradsligninger), brøker, udtryk, enheder, tid, talrækker, sortering og lige/ulige tal.
+   Er appen uenig med AI'en, kan togtet ikke gemmes, før en voksen har valgt.
+2. **Den voksne ser, hvad der er tjekket.** Hver opgave er mærket "regnet efter af appen",
+   "tjekket af dig" eller "kun AI – tjek mod arket" (fx aflæsning af figurer).
+3. **Barnet kan melde fejl.** "Jeg tror facit er forkert" giver det tilbage, tyven tog, og
+   markerer opgaven. Den voksne retter togtet bagefter, og opgaven kan løses igen.
+4. **Automatiske tests** (`pnpm test`) med tusindvis af tilfældige regnestykker og ligninger
+   med kendt facit kører ved hvert push på GitHub og før hver deploy.
+
 ### Scanning med din egen AI-nøgle
 
 Appen har ingen indbygget AI-adgang. Du bruger din egen nøgle hos én af tre udbydere:

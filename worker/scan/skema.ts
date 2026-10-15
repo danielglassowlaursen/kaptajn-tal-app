@@ -25,6 +25,7 @@ const opgave = {
     historie: str,
     spoergsmaal: str,
     regnestykke: str,
+    udregning: str,
     hint_1: str,
     hint_2: str,
     papir: str,
@@ -57,7 +58,7 @@ const opgave = {
     usikker_grund: str,
   },
   required: [
-    'nr', 'type', 'historie', 'spoergsmaal', 'regnestykke', 'hint_1', 'hint_2', 'papir', 'enhed', 'svar_tal', 'svar_tekst',
+    'nr', 'type', 'historie', 'spoergsmaal', 'regnestykke', 'udregning', 'hint_1', 'hint_2', 'papir', 'enhed', 'svar_tal', 'svar_tekst',
     'raekke', 'raekke_svar', 'valgmuligheder', 'rigtige', 'sorteret', 'tal_liste', 'venstre', 'hoejre', 'felter_total',
     'felter_kolonner', 'plads', 'x', 'y', 'decimaler', 'svar_liste', 'variabel', 'broek_taeller', 'broek_naevner', 'forkortet',
     'svar_udtryk', 'graf_funktioner', 'graf_vindue', 'usikker', 'usikker_grund',
@@ -84,6 +85,7 @@ export interface RaaOpgave {
   historie: string
   spoergsmaal: string
   regnestykke: string
+  udregning: string
   hint_1: string
   hint_2: string
   papir: string

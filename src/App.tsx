@@ -10,7 +10,9 @@ import { Scan } from './components/Scan'
 import { Velkommen } from './components/Velkommen'
 import { loadAi, saveAi, type AiIndstillinger } from './lib/ai'
 import { erTom, loadProgress, saveProgress, TOM_PROGRESS } from './lib/progress'
-import { begrav, bogfoer, evaluerDage, tilfoejTid, type Resultat } from './lib/spil'
+import { aabnOpgaver, begrav, bogfoer, evaluerDage, rapporterFacit, tilfoejTid, type Resultat } from './lib/spil'
+import { Gennemse } from './components/Gennemse'
+import { answerText } from './lib/check'
 import { dagKey } from './lib/dato'
 import {
   arkUrl,
@@ -47,6 +49,7 @@ type Screen =
   | { kind: 'togt'; togtId: string; startIndex: number; skipIntro?: boolean }
   | { kind: 'begrav' }
   | { kind: 'scan' }
+  | { kind: 'ret'; togtId: string }
 
 /** Udvikler-genvej: ?togt=togt2&i=13 åbner opgave 13 i togt 2 direkte. */
 function screenFromUrl(): Screen {
@@ -265,6 +268,25 @@ export default function App() {
     return { guld: b.guld, tyveri: b.tyveri }
   }
 
+  function rapport(togtId: string, opgaveId: string): number {
+    const r = rapporterFacit(ref.current, togtId, opgaveId)
+    update(r.p)
+    return r.tilbage
+  }
+
+  /** Gem et rettet togt. Opgaver med ændret facit eller en melding fra barnet åbnes igen. */
+  function gemRettet(ny: Togt) {
+    const g = lagerRef.current[ny.id]
+    if (!g) return
+    const foer = new Map(g.togt.opgaver.map((o) => [o.id, answerText(o)]))
+    const svar = ref.current.togter[ny.id]?.svar ?? {}
+    const aabn = ny.opgaver.filter((o) => foer.get(o.id) !== answerText(o) || svar[o.id]?.rapport).map((o) => o.id)
+    void gemTogt({ ...g, togt: { ...ny, ark: ny.ark ? { ...g.togt.ark, ...ny.ark } : g.togt.ark }, updatedAt: Date.now() })
+    if (aabn.length) update(aabnOpgaver(ref.current, ny.id, aabn))
+    setScreen({ kind: 'home' })
+    addToasts([`✏️ "${ny.title}" er rettet.${aabn.length ? ` ${aabn.length} opgave${aabn.length === 1 ? '' : 'r'} kan løses igen.` : ''}`])
+  }
+
   function begravNu(sted: Gravested) {
     update(begrav(ref.current, sted))
   }
@@ -428,7 +450,7 @@ export default function App() {
 
   // ------------------------------------------------------------ render
   const active: MenuKey | null =
-    screen.kind === 'home' || screen.kind === 'togt' || screen.kind === 'scan'
+    screen.kind === 'home' || screen.kind === 'togt' || screen.kind === 'scan' || screen.kind === 'ret'
       ? 'home'
       : screen.kind === 'skat' || screen.kind === 'begrav'
         ? 'skat'
@@ -449,6 +471,8 @@ export default function App() {
   const mineTogterKort: ReactNode = (
     <MineTogter
       togter={egneTogter}
+      rapporter={Object.fromEntries(egneTogter.map((t) => [t.id, Object.values(progress.togter[t.id]?.svar ?? {}).filter((s) => s.rapport).length]))}
+      onRet={(id) => setScreen({ kind: 'ret', togtId: id })}
       onScan={() => setScreen({ kind: 'scan' })}
       harKode={!!kode}
       onTilfoejFil={tilfoejTogtFraFil}
@@ -498,13 +522,28 @@ export default function App() {
         onTick={tick}
         onBegrav={() => setScreen({ kind: 'begrav' })}
         onOversigt={() => setScreen({ kind: 'oversigt', togtId: togt.id })}
+        onRapport={(opgaveId) => rapport(togt.id, opgaveId)}
         onExit={() => setScreen({ kind: 'home' })}
+      />
+    )
+  } else if (screen.kind === 'ret' && lager[screen.togtId] && !lager[screen.togtId].slettet) {
+    const t = alleTogter.find((x) => x.id === screen.togtId)!
+    content = (
+      <Gennemse
+        key={t.id}
+        togt={t}
+        usikre={{}}
+        fotoUrls={t.ark?.billede ? [t.ark.billede] : []}
+        overskrift={`Ret "${t.title}"`}
+        kasserTekst="Fortryd"
+        onGem={gemRettet}
+        onKasser={() => setScreen({ kind: 'home' })}
       />
     )
   } else if (screen.kind === 'scan') {
     content = <Scan kode={kode} tema={tema.id} klasse={progress.klasse ?? 0} ai={ai} onGemAi={gemAi} onGem={(t, foto) => void gemScannet(t, foto)} onExit={() => setScreen({ kind: 'home' })} />
   } else if (screen.kind === 'oversigt') {
-    content = <Oversigt progress={progress} togter={alleTogter} fokus={screen.togtId} onStart={(togtId, startIndex) => setScreen({ kind: 'togt', togtId, startIndex })} />
+    content = <Oversigt progress={progress} togter={alleTogter} egne={new Set(egneTogter.map((t) => t.id))} onRet={(id) => setScreen({ kind: 'ret', togtId: id })} fokus={screen.togtId} onStart={(togtId, startIndex) => setScreen({ kind: 'togt', togtId, startIndex })} />
   } else if (screen.kind === 'begrav') {
     content = <Begrav pung={progress.pung} onTick={tick} onBegrav={begravNu} onExit={() => setScreen({ kind: 'home' })} />
   } else if (screen.kind === 'skat') {

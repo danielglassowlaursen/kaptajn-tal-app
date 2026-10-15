@@ -1725,3 +1725,61 @@ input {
   color: #fbfaf6;
   text-shadow: 0 3px 0 #d0782a, 0 8px 18px rgba(0, 0, 0, 0.45);
 }
+
+/* ------------------------------------------------------------------ kontrol af facit */
+.kontrol {
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-weight: 800;
+  font-size: 0.95rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.kontrol-ok {
+  background: var(--green-soft);
+  color: #14532d;
+}
+.kontrol-voksen {
+  background: #e3ecff;
+  color: #1d3a7a;
+  display: block;
+}
+.kontrol-uenig {
+  background: var(--red-soft);
+  color: #6b1d12;
+  border: 2px solid var(--red);
+}
+.kontrol-ukendt {
+  background: #fdebc8;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
+  cursor: pointer;
+}
+.kontrol-ukendt input {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  margin-top: 2px;
+}
+.rapport-knap {
+  align-self: flex-start;
+}
+.rapport-badge {
+  margin-left: 8px;
+  background: var(--red-soft);
+  color: #6b1d12;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+.oversigt-row.status-rapport {
+  background: var(--red-soft);
+}
+.gennemse.uden-foto {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 760px;
+  margin: 0 auto;
+}

@@ -6,12 +6,15 @@ import { useTema } from '../tema'
 interface Props {
   progress: Progress
   togter: Togt[]
+  /** Familiens egne togter (kan rettes). */
+  egne?: Set<string>
+  onRet?: (togtId: string) => void
   /** Togt der skal være foldet ud fra start. */
   fokus?: string
   onStart: (togtId: string, startIndex: number) => void
 }
 
-type Status = 'foerste' | 'andet' | 'polly' | 'forkert' | 'loest' | 'aaben'
+type Status = 'foerste' | 'andet' | 'polly' | 'forkert' | 'loest' | 'aaben' | 'rapport'
 
 const STATUS: Record<Status, { ikon: string; tekst: string }> = {
   foerste: { ikon: '✅', tekst: 'Selv, første forsøg' },
@@ -20,12 +23,14 @@ const STATUS: Record<Status, { ikon: string; tekst: string }> = {
   forkert: { ikon: '❌', tekst: 'Forkert – svaret blev vist' },
   loest: { ikon: '✅', tekst: 'Løst' },
   aaben: { ikon: '⬜', tekst: 'Ikke løst endnu' },
+  rapport: { ikon: '🚩', tekst: 'Meldt forkert – en voksen skal tjekke facit' },
 }
 
 function statusFor(progress: Progress, togt: Togt, o: Opgave): { status: Status; svar?: Svar } {
   const tp = progress.togter[togt.id]
   if (!tp || !(o.id in tp.done)) return { status: 'aaben' }
   const svar = tp.svar?.[o.id]
+  if (svar?.rapport) return { status: 'rapport', svar }
   if (svar) return { status: svar.r, svar }
   // Gamle data uden detaljer: gæt ud fra guldet.
   const guld = tp.done[o.id]
@@ -40,7 +45,7 @@ function label(o: Opgave): string {
 }
 
 /** Siden "Oversigt": facit og hjælp pr. opgave, så svarene kan skrives over på arket bagefter. */
-export function Oversigt({ progress, togter, fokus, onStart }: Props) {
+export function Oversigt({ progress, togter, egne, onRet, fokus, onStart }: Props) {
   const t = useTema()
   return (
     <div className="page">
@@ -102,6 +107,11 @@ export function Oversigt({ progress, togter, fokus, onStart }: Props) {
               </p>
             ))}
 
+            {egne?.has(togt.id) && onRet && (
+              <button className="btn btn-ghost btn-small" onClick={() => onRet(togt.id)}>
+                ✏️ Ret facit og tekster{antal('rapport') > 0 ? ` (${antal('rapport')} meldt forkert)` : ''}
+              </button>
+            )}
             {foersteAabne !== -1 && (
               <button className="btn btn-primary" onClick={() => onStart(togt.id, foersteAabne)}>
                 {loest === 0 ? t.startRejse : t.fortsaetRejse}

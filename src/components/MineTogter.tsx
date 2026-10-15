@@ -4,6 +4,9 @@ import { useTema } from '../tema'
 
 interface Props {
   togter: Togt[]
+  /** Antal opgaver pr. togt, som barnet har meldt forkerte. */
+  rapporter: Record<string, number>
+  onRet: (togtId: string) => void
   onScan: () => void
   harKode: boolean
   onTilfoejFil: (text: string) => { ok: boolean; besked: string }
@@ -14,7 +17,7 @@ interface Props {
 }
 
 /** Kortet "Dine togter": tilføj fra fil, arkfoto, eksport og sletning. */
-export function MineTogter({ togter, onScan, harKode, onTilfoejFil, onEksport, onSlet, onFoto, onFjernFoto }: Props) {
+export function MineTogter({ togter, rapporter, onRet, onScan, harKode, onTilfoejFil, onEksport, onSlet, onFoto, onFjernFoto }: Props) {
   const t0 = useTema()
   const filRef = useRef<HTMLInputElement>(null)
   const fotoRef = useRef<HTMLInputElement>(null)
@@ -70,8 +73,16 @@ export function MineTogter({ togter, onScan, harKode, onTilfoejFil, onEksport, o
                   {' '}
                   · {t.opgaver.length} opgaver{t.ark?.foto ? ' · 📷 arkfoto' : ''}
                 </span>
+                {(rapporter[t.id] ?? 0) > 0 && (
+                  <span className="rapport-badge">
+                    🚩 {rapporter[t.id]} meldt forkert
+                  </span>
+                )}
               </div>
               <div className="btn-row left">
+                <button className="btn btn-ghost btn-small" onClick={() => onRet(t.id)}>
+                  ✏️ Ret
+                </button>
                 {harKode && (
                   <button
                     className="btn btn-ghost btn-small"
