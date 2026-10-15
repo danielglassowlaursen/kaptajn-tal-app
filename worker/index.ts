@@ -22,12 +22,22 @@ import { logForbrug, maaScanne } from './plan'
 import { scan, anslaaPris, ScanFejl, type Billede, type Udbyder } from './scan/udbydere'
 import { systemPrompt, brugerTekst, TEMAER } from './scan/prompt'
 import { tilTogt } from './scan/konverter'
+import SKEMA from './schema.sql'
+
+/** Cloudflare Rate Limiting-binding (valgfri – uden den er der ingen grænser). */
+interface RateLimit {
+  limit(o: { key: string }): Promise<{ success: boolean }>
+}
 
 interface Env {
   DB: D1Database
   ASSETS: Fetcher
   /** Valgfri: uden R2 virker alt undtagen arkfotos. */
   ARK?: R2Bucket
+  /** Valgfri grænser: alle API-kald pr. IP, opslag af ukendte koder pr. IP, og scanninger. */
+  API_LIMIT?: RateLimit
+  GAET_LIMIT?: RateLimit
+  SCAN_LIMIT?: RateLimit
 }
 
 const KODE_RE = /^[a-z0-9æøå-]{6,40}$/
@@ -45,6 +55,36 @@ const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } })
 
 type Løs = Record<string, unknown>
+
+// ------------------------------------------------------------ skema
+// Tabellerne oprettes ved første kald (idempotent), så en ny installation virker
+// uden at man selv skal køre schema.sql.
+let skemaKlar: Promise<unknown> | null = null
+
+function sikrSkema(env: Env): Promise<unknown> {
+  if (!skemaKlar) {
+    const saetninger = SKEMA.replace(/--[^\n]*/g, '')
+      .split(';')
+      .map((s) => s.replace(/\s+/g, ' ').trim())
+      .filter(Boolean)
+    skemaKlar = env.DB.batch(saetninger.map((s) => env.DB.prepare(s))).catch((e) => {
+      skemaKlar = null
+      throw e
+    })
+  }
+  return skemaKlar
+}
+
+async function grænse(l: RateLimit | undefined, key: string): Promise<boolean> {
+  if (!l) return true
+  try {
+    return (await l.limit({ key })).success
+  } catch {
+    return true // en fejl i grænsen må aldrig lukke appen ned
+  }
+}
+
+const forMange = () => json({ fejl: 'For mange forespørgsler lige nu. Vent et øjeblik, og prøv igen.' }, 429)
 
 // ------------------------------------------------------------ familie
 
@@ -114,6 +154,10 @@ export default {
     const url = new URL(request.url)
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request)
 
+    const ip = request.headers.get('cf-connecting-ip') ?? 'lokal'
+    if (!(await grænse(env.API_LIMIT, ip))) return forMange()
+    await sikrSkema(env)
+
     const m = url.pathname.match(/^\/api\/f\/([^/]+)\/(progress|historik|gendan|togter|ark|scan)(?:\/([^/]+))?$/)
     if (!m) return json({ fejl: 'Ukendt adresse' }, 404)
     const kode = decodeURIComponent(m[1]).toLowerCase()
@@ -126,6 +170,8 @@ export default {
     // Læsning på en ukendt kode opretter ikke noget.
     const skriver = metode === 'PUT' || metode === 'POST' || metode === 'DELETE'
     const fid = skriver ? await findEllerOpretFamilie(env, kode) : await findFamilie(env, kode)
+    // Gætteri på koder: læsning af en ukendt kode tæller i en strammere grænse.
+    if (!fid && !(await grænse(env.GAET_LIMIT, ip))) return forMange()
 
     // ---------------- progress
     if (del === 'progress' && !id) {
@@ -257,6 +303,7 @@ export default {
       const tema = TEMAER[typeof body.tema === 'string' ? body.tema : 'pirat'] ?? TEMAER.pirat
       const arkNavn = typeof body.arkNavn === 'string' && body.arkNavn.trim() ? body.arkNavn.trim().slice(0, 80) : null
 
+      if (!(await grænse(env.SCAN_LIMIT, `f:${fid}`)) || !(await grænse(env.SCAN_LIMIT, `ip:${ip}`))) return forMange()
       const tilladelse = await maaScanne(env.DB, fid, 'egen')
       if (!tilladelse.ok) return json({ fejl: tilladelse.grund ?? 'Scanning er ikke tilladt' }, 402)
 

@@ -3,7 +3,7 @@
 // spillets regler er de samme i alle temaer. Nyt tema = ny fil i src/tema/.
 // ---------------------------------------------------------------------------
 
-export type TemaId = 'pirat' | 'prinsesse'
+export type TemaId = 'pirat' | 'prinsesse' | 'rum'
 
 export interface Samling {
   navn: string
@@ -45,7 +45,7 @@ export interface Tema {
   gemFaerdig: string // "Skatten er begravet!"
   gemSted: string // "Skatteøen"
   gaaTilGemmested: string // "ro i land"
-  moent: { form: 'moent' | 'aedelsten'; ydre: string; indre: string; tegn: string }
+  moent: { form: 'moent' | 'aedelsten' | 'stjerne'; ydre: string; indre: string; tegn: string }
   gemmested: { vand: [string, string]; kant: string; land: string; midte: string; pynt: string[] }
 
   // Figurer

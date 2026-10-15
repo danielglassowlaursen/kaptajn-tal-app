@@ -7,6 +7,7 @@ import { downloadFil, filnavn, parseTogtFil, togtTilFil } from './lib/togtFil'
 import { komprimer } from './lib/billede'
 import { MineTogter } from './components/MineTogter'
 import { Scan } from './components/Scan'
+import { Velkommen } from './components/Velkommen'
 import { loadAi, saveAi, type AiIndstillinger } from './lib/ai'
 import { erTom, loadProgress, saveProgress, TOM_PROGRESS } from './lib/progress'
 import { begrav, bogfoer, evaluerDage, tilfoejTid, type Resultat } from './lib/spil'
@@ -61,6 +62,7 @@ const SYNC_HASTER_MS = 1500
 const SYNC_ROLIG_MS = 15000
 
 let toastId = 1
+const VELKOMMEN_KEY = 'kaptajn-tal-velkommen-v1'
 
 export default function App() {
   const [progress, setProgress] = useState<Progress>(() => loadProgress())
@@ -74,6 +76,14 @@ export default function App() {
   const [lyd, setLyd] = useState(() => lydTil())
   const [lager, setLager] = useState<TogtLager>(() => loadTogter())
   const [ai, setAi] = useState<AiIndstillinger>(() => loadAi())
+  // Velkomstguiden vises første gang på en tom enhed uden familiekode.
+  const [velkommen, setVelkommen] = useState(() => {
+    try {
+      return !localStorage.getItem(VELKOMMEN_KEY) && !getKode() && erTom(loadProgress()) && !new URLSearchParams(location.search).get('togt')
+    } catch {
+      return false
+    }
+  })
   const tema = hentTema(progress.tema)
   const temaRef = useRef(tema)
   temaRef.current = tema
@@ -449,8 +459,30 @@ export default function App() {
     />
   )
 
+  function velkommenFaerdig(valg: 'demo' | 'scan' | 'forside') {
+    try {
+      localStorage.setItem(VELKOMMEN_KEY, '1')
+    } catch {
+      /* ignorer */
+    }
+    setVelkommen(false)
+    if (valg === 'demo') setScreen({ kind: 'togt', togtId: 'demo', startIndex: 0 })
+    else if (valg === 'scan') setScreen({ kind: 'scan' })
+    else setScreen({ kind: 'home' })
+  }
+
   let content
-  if (screen.kind === 'togt' && findTogt(screen.togtId)) {
+  if (velkommen) {
+    content = (
+      <Velkommen
+        navn={progress.name}
+        onTema={(id: TemaId) => update({ ...progress, tema: id })}
+        onNavn={(name) => update({ ...progress, name })}
+        onForbind={forbind}
+        onFaerdig={velkommenFaerdig}
+      />
+    )
+  } else if (screen.kind === 'togt' && findTogt(screen.togtId)) {
     const togt = findTogt(screen.togtId)!
     content = (
       <TogtView
@@ -494,7 +526,7 @@ export default function App() {
 
   return (
     <TemaProvider tema={tema}>
-      <TopMenu active={active} progress={progress} onNav={(k) => setScreen({ kind: k })} />
+      {!velkommen && <TopMenu active={active} progress={progress} onNav={(k) => setScreen({ kind: k })} />}
       {content}
       <Footer onRefresh={() => void genindlaes()} travl={genindlaeser} lyd={lyd} onLyd={skiftLyd} />
       <Toasts items={toasts} onDone={removeToast} />

@@ -2,11 +2,12 @@ import { createContext, useContext, type ReactNode } from 'react'
 import type { Tema, TemaId } from './typer'
 import { PIRAT } from './pirat'
 import { PRINSESSE } from './prinsesse'
+import { RUM } from './rum'
 
 export type { Tema, TemaId, Samling } from './typer'
 
-export const TEMAER: Record<TemaId, Tema> = { pirat: PIRAT, prinsesse: PRINSESSE }
-export const TEMA_LISTE: Tema[] = [PIRAT, PRINSESSE]
+export const TEMAER: Record<TemaId, Tema> = { pirat: PIRAT, prinsesse: PRINSESSE, rum: RUM }
+export const TEMA_LISTE: Tema[] = [PIRAT, PRINSESSE, RUM]
 
 export function hentTema(id: string | undefined): Tema {
   return TEMAER[id as TemaId] ?? PIRAT

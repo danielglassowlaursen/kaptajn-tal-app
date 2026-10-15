@@ -41,7 +41,9 @@ const ORD = [
 export function lavKode(): string {
   const tal = new Uint32Array(4)
   crypto.getRandomValues(tal)
-  const ord = [0, 1, 2].map((i) => ORD[tal[i] % ORD.length])
+  // Tre forskellige ord: træk fra en liste, der bliver kortere for hvert ord.
+  const rest = [...ORD]
+  const ord = [0, 1, 2].map((i) => rest.splice(tal[i] % rest.length, 1)[0])
   return `${ord.join('-')}-${10 + (tal[3] % 90)}`
 }
 

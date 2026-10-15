@@ -109,9 +109,29 @@ const DEMO_PRINSESSE: Togt[] = DEMO_PIRAT.map((t) => ({
   })),
 }))
 
+const RUM_TEKST: Record<string, { story: string; question?: string }> = {
+  'demo-01': { story: 'Raketten har 245 stjernestøv i lastrummet. På en komet samler kommandøren 38 stjernestøv mere.', question: 'Hvor meget stjernestøv er der i lastrummet nu?' },
+  'demo-02': { story: 'Robotten Bip tæller satellitter i kredsløb, men springer nogle af dem over.' },
+  'demo-03': { story: 'To rumkapsler er fyldt med månesten. Hvilken har flest?' },
+  'demo-04': { story: 'Rumstationens solpanel har 8 felter. Bip skal pudse 1/4 af felterne.', question: 'Tryk på de felter, der skal pudses.' },
+  'demo-05': { story: 'Den forsvundne satellit er markeret med et X på stjernekortet.', question: 'Hvad er satellittens koordinater (x ; y)?' },
+}
+
+const DEMO_RUM: Togt[] = DEMO_PIRAT.map((t) => ({
+  ...t,
+  title: 'Månebasen',
+  emoji: '🌙',
+  intro: 'En lille prøvemission med fem opgaver, så du kan se, hvordan appen virker. Rigtige missioner laver du ved at scanne dit eget regneark.',
+  opgaver: t.opgaver.map((o) => ({
+    ...o,
+    ...RUM_TEKST[o.id],
+    hints: o.hints?.map((h) => h.replace('mønter', 'stjernestøv').replace('kanonkugler', 'satellitter')),
+  })),
+}))
+
 /** Prøvetogtet i det valgte tema. */
 export function demoTogter(tema: TemaId): Togt[] {
-  return tema === 'prinsesse' ? DEMO_PRINSESSE : DEMO_PIRAT
+  return tema === 'prinsesse' ? DEMO_PRINSESSE : tema === 'rum' ? DEMO_RUM : DEMO_PIRAT
 }
 
 /** Id'er der er reserveret til indbyggede togter. */

@@ -1482,3 +1482,83 @@ input {
   min-height: 44px;
   padding: 8px 14px;
 }
+
+/* ------------------------------------------------------------------ tema: Kommandør Komma */
+:root[data-tema='rum'] {
+  --sea: #07081f;
+  --sea-2: #1b1d5a;
+  --sea-3: #3b2f8f;
+  --parchment: #eef2ff;
+  --parchment-2: #dbe3ff;
+  --parchment-3: #a9b6f2;
+  --ink: #141938;
+  --ink-soft: #4a5285;
+  --gold: #7ef0d8;
+  --gold-2: #1fae96;
+  --font-head: 'Audiowide', 'Trebuchet MS', sans-serif;
+  --kort-1: #1b1d5a;
+  --kort-2: #0f1140;
+  --kort-kant: #5f66c9;
+  --kort-rute: #9ff3e4;
+  --topmenu-bg: rgba(7, 8, 31, 0.92);
+  --btn-skygge: #13806e;
+}
+:root[data-tema='rum'] .title-xl {
+  color: #9ff3e4;
+  text-shadow: 0 3px 0 var(--gold-2), 0 0 24px rgba(126, 240, 216, 0.5);
+}
+:root[data-tema='rum'] .title,
+:root[data-tema='rum'] .card-title,
+:root[data-tema='rum'] .section-title,
+:root[data-tema='rum'] .togt-title {
+  letter-spacing: 0;
+}
+:root[data-tema='rum'] .coins {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ------------------------------------------------------------------ velkomst */
+.velkommen-trin {
+  color: var(--parchment);
+  text-align: center;
+  margin-top: 8px;
+}
+.tema-kort {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+.tema-kort-valg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 10px;
+  background: #fffdf6;
+  border: 3px solid var(--parchment-3);
+  border-radius: 14px;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.tema-kort-valg.on {
+  border-color: var(--gold-2);
+  background: var(--parchment-2);
+  box-shadow: 0 0 0 3px var(--gold) inset;
+}
+.tema-kort-flag {
+  font-size: 2.6rem;
+  line-height: 1;
+}
+.velkommen-navn {
+  width: 100%;
+  max-width: 320px;
+  text-align: center;
+  font-size: 1.4rem;
+}
+.velkommen-liste {
+  text-align: left;
+  max-width: 480px;
+}

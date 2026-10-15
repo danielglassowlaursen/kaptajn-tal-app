@@ -23,6 +23,12 @@ export const TEMAER: Record<string, TemaBeskrivelse> = {
     hjaelper: 'enhjørningen Luna',
     valuta: 'ædelsten',
   },
+  rum: {
+    navn: 'Rummet',
+    univers: 'astronauter, raketter, planeter, rumstationer, måner, kometer, robotter og venlige rumvæsner',
+    hjaelper: 'robotten Bip',
+    valuta: 'stjernestøv',
+  },
 }
 
 export function systemPrompt(tema: TemaBeskrivelse): string {

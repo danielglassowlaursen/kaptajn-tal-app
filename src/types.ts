@@ -170,5 +170,5 @@ export interface Progress {
   /** Hvornår fremgangen sidst blev ændret (ms). Nyeste vinder ved synk. */
   updatedAt: number
   /** Familiens valgte tema (følger med familiekoden). */
-  tema?: 'pirat' | 'prinsesse'
+  tema?: 'pirat' | 'prinsesse' | 'rum'
 }

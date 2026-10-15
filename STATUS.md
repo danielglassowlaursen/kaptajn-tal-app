@@ -3,7 +3,7 @@
 _Updated: 2026-10-14 · laptop_
 
 ## Now
-Fase 3 er færdig og deployet: tema-system med Pirater og Prinsesse Plus. Næste er fase 4 (tema 3 Kommandør Komma, onboarding, rate-limit, Deploy-knap). Stadig: Daniel tester en rigtig scanning og slår R2 til.
+Fase 4 er færdig og deployet: tema 3 (Kommandør Komma), velkomstguide, rate-limit, dagligt scan-loft, selv-oprettende skema og Deploy to Cloudflare-knap. Alle planlagte faser for den gratis udgave er færdige. Åbent: Daniel tester en rigtig scanning og slår R2 til.
 
 ## State
 - ✅ Fase 0: licens, README, CONTRIBUTING med bidragsaftale, ROADMAP, prøvetogt.
@@ -17,15 +17,17 @@ Fase 3 er færdig og deployet: tema-system med Pirater og Prinsesse Plus. Næste
 - ✅ Fase 2: `POST /api/f/:kode/scan` (worker/scan/: skema, prompt, adaptere, konverter). Fladt skema med kun én union-type (Anthropic-grænse: 16 unions, 24 valgfrie). Claude via SDK med streaming, effort medium, struktureret output og `fallbacks: "default"`. OpenAI/OpenRouter via chat completions + json_schema.
 - ✅ Klient: AI-indstillinger på enheden (`src/lib/ai.ts`), Scan-skærm (fotos komprimeres til 1600 px JPEG), Gennemse-editor med facit-tjek (`src/lib/facitTjek.ts`: regner udtryk, x-ligninger, sammenlign, sortering, hint-2-læk).
 - ✅ Fase 3: `src/tema/` (typer, pirat, prinsesse, kontekst `useTema`). Tema gemmes i `Progress.tema` og synker. CSS-palet + skrift via `data-tema` på <html>. Spillogik (`spil.ts`) tager tema som parameter. Besætningens navne vises efter plads, så et temaskift giver temaets navne. Prøvetogt i begge temaer med samme opgave-id'er. AI-prompten kender begge temaer. Guide: `docs/TEMAER.md`.
+- ✅ Fase 4: tema `rum` (Bip, Zorg, stjernestøv tegnet som stjerne, Audiowide-skrift). Velkomstguide (`Velkommen.tsx`) første gang på tom enhed uden kode: tema → navn → familiekode → klar. Rate-limit via Cloudflare-binding (API 300/min/IP, ukendte koder 20/min/IP, scan 5/min pr. familie og IP) – valgfri, fejler åbent. Dagligt loft 40 scanninger/familie i `maaScanne`. Skema oprettes af Worker'en ved første kald (`schema.sql` importeret som tekst). Offentlig `wrangler.jsonc` uden database-id → automatisk oprettelse; Deploy-knap i README (ikke testet med en fremmed konto).
 - ✅ Forbrug logges pr. scanning (`forbrug`-tabellen) med anslået pris for Claude-modeller.
 - ✅ Deployet: https://kaptajn-tal-app.dl-a66.workers.dev (Daniels konto, `wrangler.local.jsonc` – ignoreret af git). R2 er IKKE slået til endnu → arkfotos svarer 501.
 - 🚧 Ingen rigtig scanning kørt endnu (ingen nøgle på maskinen). Fejlveje er testet mod alle tre udbydere med ugyldig nøgle; gennemse/gem er testet med simuleret AI-svar.
 
 ## Next
-1. Daniel: test en rigtig scanning med egen Claude-nøgle på et ark. Justér prompten efter resultatet.
-2. Daniel: slå R2 til i Cloudflare-dashboardet → tilføj `r2_buckets` i `wrangler.local.jsonc` → `npx wrangler r2 bucket create kaptajn-tal-app-ark` → `pnpm deploy:mine`.
-3. Fase 3: tema-system (pirat som tema 1, Prinsesse Plus som tema 2). Prompten tager allerede et tema-parameter.
-4. Tjek Workers-plan: free-planens 10 ms CPU kan blive stram ved store fotos i scan-kaldet.
+1. Daniel: test en rigtig scanning med egen Claude-nøgle (gerne i alle tre temaer). Justér prompten efter resultatet.
+2. Daniel: slå R2 til → tilføj `r2_buckets` i `wrangler.local.jsonc` → `npx wrangler r2 bucket create kaptajn-tal-app-ark` → `pnpm deploy:mine`.
+3. Tjek Deploy to Cloudflare-knappen med en testkonto.
+4. Flyt Isaks togter og fremgang fra den private udgave, når han er klar (afsnit 7 i den private plan).
+5. Senere: betalt plan (fase 5), lyde pr. tema, engelsk oversættelse.
 
 ## Watch out
 - Den fulde plan med private detaljer ligger kun i det private repo. Læg den aldrig her.

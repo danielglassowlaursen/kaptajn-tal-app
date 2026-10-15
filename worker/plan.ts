@@ -11,8 +11,16 @@ export interface ScanTilladelse {
   grund?: string
 }
 
-/** Må familien scanne et ark med den givne nøglekilde? Kaldes før hver scanning (fase 2). */
+/** Højst så mange scanninger pr. familie pr. døgn – også med egen nøgle, for at beskytte serveren. */
+export const SCAN_PR_DOEGN = 40
+
+/** Må familien scanne et ark med den givne nøglekilde? Kaldes før hver scanning. */
 export async function maaScanne(db: D1Database, familieId: string, kilde: Noeglekilde): Promise<ScanTilladelse> {
+  const doegn = await db
+    .prepare('SELECT count(*) AS n FROM forbrug WHERE familie_id = ? AND tid > ?')
+    .bind(familieId, Date.now() - 24 * 3600_000)
+    .first<{ n: number }>()
+  if ((doegn?.n ?? 0) >= SCAN_PR_DOEGN) return { ok: false, grund: `I har scannet ${SCAN_PR_DOEGN} ark det seneste døgn. Prøv igen i morgen.` }
   if (kilde === 'egen') return { ok: true }
   const f = await db.prepare('SELECT plan FROM familier WHERE id = ?').bind(familieId).first<{ plan: string }>()
   if (f?.plan !== 'betalt') return { ok: false, grund: 'Kræver betalt plan' }

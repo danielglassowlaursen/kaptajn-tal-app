@@ -8,7 +8,7 @@ gangen.
 | --- | --- | --- |
 | 🏴‍☠️ **Kaptajn Tal** – pirater | Papegøjen Polly | Guldmønter, besætning og skibe |
 | 🦄 **Kaptajn Tal – Prinsesse Plus** – enhjørninger og prinsesser | Enhjørningen Luna | Ædelsten, hof og slotte |
-| 🚀 **Kaptajn Tal – Kommandør Komma** – rummet (på vej) | Robotten Bip | Stjernestøv og raketter |
+| 🚀 **Kaptajn Tal – Kommandør Komma** – rummet | Robotten Bip | Stjernestøv, besætning og rumskibe |
 
 Se [docs/TEMAER.md](docs/TEMAER.md), hvis du vil lave dit eget tema.
 
@@ -75,16 +75,30 @@ pnpm dev:api
 
 ## Kør din egen kopi på Cloudflare
 
-Gratis-planen hos Cloudflare rækker til en familie eller en skoleklasse.
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/danielglassowlaursen/kaptajn-tal-app)
 
-1. Log ind: `npx wrangler login`
-2. Opret databasen: `npx wrangler d1 create kaptajn-tal-app`
-3. Indsæt det udskrevne `database_id` i `wrangler.jsonc`.
-4. Opret lageret til arkfotos: `npx wrangler r2 bucket create kaptajn-tal-app-ark`
-5. Opret tabellerne: `pnpm db:init`
-6. Udgiv: `pnpm deploy`
+Knappen kopierer projektet til din egen GitHub og udgiver det på din Cloudflare-konto.
+Database (D1), billedlager (R2) og grænser for antal kald oprettes automatisk, og tabellerne
+oprettes ved første besøg. Gratis-planen rækker til en familie eller en skoleklasse.
 
-Har du flere Cloudflare-konti, så sæt `CLOUDFLARE_ACCOUNT_ID` før kommandoerne.
+**R2 skal være slået til** på din Cloudflare-konto (Dashboard → R2), før arkfotos virker.
+Uden R2 kan du fjerne `r2_buckets` fra `wrangler.jsonc` – så virker alt undtagen arkfotos.
+
+Eller fra kommandolinjen:
+
+```bash
+npx wrangler login
+pnpm install
+pnpm deploy
+```
+
+Har du flere Cloudflare-konti, så sæt `CLOUDFLARE_ACCOUNT_ID` først.
+
+### Beskyttelse
+
+- Højst 300 kald i minuttet pr. IP, 20 opslag af ukendte familiekoder i minuttet pr. IP (mod
+  gætteri) og 5 scanninger i minuttet pr. familie og pr. IP. Justér i `wrangler.jsonc`.
+- Højst 40 scanninger pr. familie pr. døgn (`worker/plan.ts`).
 
 ## Lyde
 

@@ -7,7 +7,7 @@ bestemmer ord, figurer, farver, skrift og pynt.
 | --- | --- | --- | --- | --- | --- | --- |
 | Pirater | Kaptajn Tal | Papegøjen Polly | Sorte Sven | Guldmønter | Besætningsmedlem | Flåde af skibe |
 | Enhjørninger og prinsesser | Kaptajn Tal – Prinsesse Plus | Enhjørningen Luna | Trolden Grum | Ædelsten | Ven ved hoffet | Rige af slotte |
-| Rummet (på vej) | Kaptajn Tal – Kommandør Komma | Robotten Bip | Rumpiraten Zorg | Stjernestøv | Besætningsmedlem | Flåde af raketter |
+| Rummet | Kaptajn Tal – Kommandør Komma | Robotten Bip | Rumpiraten Zorg | Stjernestøv | Astronaut | Flåde af rumskibe |
 
 Familien vælger tema på forsiden. Valget følger familiekoden, så alle enheder viser samme tema.
 

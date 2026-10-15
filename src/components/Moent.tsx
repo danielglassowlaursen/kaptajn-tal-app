@@ -4,6 +4,15 @@ import { useTema } from '../tema'
 export function Moent({ size = 20 }: { size?: number }) {
   const m = useTema().moent
   const style = { verticalAlign: '-0.2em', marginRight: 4, display: 'inline-block' }
+  if (m.form === 'stjerne') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" style={style}>
+        <polygon points="12,1 14.9,8.6 23,9 16.7,14 18.9,22 12,17.4 5.1,22 7.3,14 1,9 9.1,8.6" fill={m.ydre} />
+        <polygon points="12,4.5 14,9.8 19.6,10.1 15.3,13.6 16.8,19.1 12,15.9 7.2,19.1 8.7,13.6 4.4,10.1 10,9.8" fill={m.indre} />
+        <circle cx="10" cy="10.5" r="1.4" fill={m.tegn} opacity="0.8" />
+      </svg>
+    )
+  }
   if (m.form === 'aedelsten') {
     return (
       <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" style={style}>
