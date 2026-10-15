@@ -3,6 +3,7 @@ import type { Tema } from './typer'
 export const PRINSESSE: Tema = {
   id: 'prinsesse',
   navn: 'Enhjørninger og prinsesser',
+  klasser: '1.–6. klasse',
   undertitel: 'Prinsesse Plus',
   flag: '🦄',
   slogan: 'Regn dig frem til ædelstenene!',

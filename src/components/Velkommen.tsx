@@ -2,9 +2,12 @@ import { useState } from 'react'
 import { appNavn, TEMA_LISTE, useTema, type TemaId } from '../tema'
 import { KODE_RE, lavKode, normaliserKode } from '../lib/sync'
 import type { ForbindResultat } from './FamilieKode'
+import { KlasseVaelger } from './KlasseVaelger'
 
 interface Props {
   navn: string
+  klasse: number | undefined
+  onKlasse: (k: number) => void
   onTema: (id: TemaId) => void
   onNavn: (navn: string) => void
   onForbind: (kode: string) => Promise<ForbindResultat>
@@ -15,7 +18,7 @@ type Trin = 'tema' | 'navn' | 'kode' | 'klar'
 const TRIN: Trin[] = ['tema', 'navn', 'kode', 'klar']
 
 /** Første gang: vælg univers, navn og familiekode – og se, hvad man kan nu. */
-export function Velkommen({ navn, onTema, onNavn, onForbind, onFaerdig }: Props) {
+export function Velkommen({ navn, klasse, onKlasse, onTema, onNavn, onForbind, onFaerdig }: Props) {
   const t = useTema()
   const [trin, setTrin] = useState<Trin>('tema')
   const [kodeValg, setKodeValg] = useState<'ny' | 'har' | null>(null)
@@ -60,6 +63,7 @@ export function Velkommen({ navn, onTema, onNavn, onForbind, onFaerdig }: Props)
                 <span className="small">
                   {x.hjaelper.emoji} {x.hjaelper.art} {x.hjaelper.navn} hjælper
                 </span>
+                {x.klasser && <span className="muted small">{x.klasser}</span>}
               </button>
             ))}
           </div>
@@ -78,6 +82,8 @@ export function Velkommen({ navn, onTema, onNavn, onForbind, onFaerdig }: Props)
           </h1>
           <p className="muted">Kun fornavnet. Det bruges i appen og gemmes ikke andre steder.</p>
           <input className="name-input velkommen-navn" value={navn} onChange={(e) => onNavn(e.target.value)} placeholder="Skriv dit navn" maxLength={24} autoFocus />
+          <KlasseVaelger klasse={klasse} onKlasse={onKlasse} />
+          <p className="muted small">Klassetrinnet bruges, så historier og hints passer til alderen.</p>
           <div className="btn-row">
             <button className="btn btn-ghost" onClick={() => setTrin('tema')}>
               ← Tilbage

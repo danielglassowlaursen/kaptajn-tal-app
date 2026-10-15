@@ -287,7 +287,7 @@ export default {
     if (del === 'scan' && !id && metode === 'POST' && fid) {
       const text = await request.text()
       if (text.length > MAX_SCAN) return json({ fejl: 'Billederne fylder for meget. Brug færre eller mindre fotos.' }, 413)
-      let body: { udbyder?: unknown; model?: unknown; noegle?: unknown; billeder?: unknown; arkNavn?: unknown; tema?: unknown }
+      let body: { udbyder?: unknown; model?: unknown; noegle?: unknown; billeder?: unknown; arkNavn?: unknown; tema?: unknown; klasse?: unknown }
       try {
         body = JSON.parse(text)
       } catch {
@@ -301,6 +301,7 @@ export default {
       if (billeder.length === 0 || billeder.length > MAX_BILLEDER) return json({ fejl: `Send 1–${MAX_BILLEDER} fotos` }, 400)
       if (!billeder.every((b) => b && BILLEDTYPER.has(b.type) && typeof b.data === 'string' && b.data.length > 100)) return json({ fejl: 'Ugyldigt billede' }, 400)
       const tema = TEMAER[typeof body.tema === 'string' ? body.tema : 'pirat'] ?? TEMAER.pirat
+      const klasse = typeof body.klasse === 'number' && Number.isInteger(body.klasse) && body.klasse >= 0 && body.klasse <= 10 ? body.klasse : 0
       const arkNavn = typeof body.arkNavn === 'string' && body.arkNavn.trim() ? body.arkNavn.trim().slice(0, 80) : null
 
       if (!(await grænse(env.SCAN_LIMIT, `f:${fid}`)) || !(await grænse(env.SCAN_LIMIT, `ip:${ip}`))) return forMange()
@@ -308,7 +309,7 @@ export default {
       if (!tilladelse.ok) return json({ fejl: tilladelse.grund ?? 'Scanning er ikke tilladt' }, 402)
 
       try {
-        const svar = await scan({ udbyder, model: body.model, noegle: body.noegle, system: systemPrompt(tema), tekst: brugerTekst(arkNavn), billeder })
+        const svar = await scan({ udbyder, model: body.model, noegle: body.noegle, system: systemPrompt(tema, klasse), tekst: brugerTekst(arkNavn), billeder })
         const prisUsd = anslaaPris(body.model, svar.inputTokens, svar.outputTokens)
         await logForbrug(env.DB, { familieId: fid, kilde: 'egen', udbyder, model: body.model, inputTokens: svar.inputTokens, outputTokens: svar.outputTokens, prisUsd })
         if (!Array.isArray(svar.raa?.opgaver) || svar.raa.opgaver.length === 0) return json({ fejl: 'Modellen fandt ingen opgaver på arket.' }, 422)

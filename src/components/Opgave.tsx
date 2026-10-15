@@ -10,8 +10,13 @@ import type {
   FelterOpgave,
   CifferOpgave,
   KoordinatOpgave,
+  FlereOpgave,
+  BroekOpgave,
+  UdtrykOpgave,
 } from '../types'
-import { talCorrect, parseNumber, sameSet, cifferTargets, formatNumber } from '../lib/check'
+import { talCorrect, parseNumber, sameSet, cifferTargets, formatNumber, flereCorrect, broekCorrect, udtrykCorrect } from '../lib/check'
+import { laesUdtryk } from '../lib/matematik'
+import { Mat } from './Mat'
 
 export type Status = 'open' | 'correct' | 'revealed'
 
@@ -42,6 +47,12 @@ export function OpgaveView({ opgave, status, onCheck }: RProps<Opgave>) {
       return <Ciffer opgave={opgave} status={status} onCheck={onCheck} />
     case 'koordinat':
       return <Koordinat opgave={opgave} status={status} onCheck={onCheck} />
+    case 'flere':
+      return <Flere opgave={opgave} status={status} onCheck={onCheck} />
+    case 'broek':
+      return <Broek opgave={opgave} status={status} onCheck={onCheck} />
+    case 'udtryk':
+      return <Udtryk opgave={opgave} status={status} onCheck={onCheck} />
   }
 }
 
@@ -376,6 +387,102 @@ function Koordinat({ opgave, status, onCheck }: RProps<KoordinatOpgave>) {
       />
       <span className="koord-paren">)</span>
       {!locked && <CheckButton disabled={!filled} onClick={submit} />}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------- flere løsninger
+function Flere({ opgave, status, onCheck }: RProps<FlereOpgave>) {
+  const [vals, setVals] = useState<string[]>(() => Array(Math.max(2, opgave.answers.length)).fill(''))
+  const [ingen, setIngen] = useState(false)
+  const locked = status !== 'open'
+  const v = opgave.variabel ?? 'x'
+  const udfyldt = ingen || vals.some((x) => x.trim() !== '')
+  const submit = () => udfyldt && onCheck(flereCorrect(opgave, vals, ingen))
+  return (
+    <div>
+      <div className="flere-felter">
+        {vals.map((val, i) => (
+          <label className="flere-felt" key={i}>
+            <span className="koord-paren">{v} =</span>
+            <input
+              className={cls('tal-input tal-input-small', status === 'correct' && 'is-correct', status === 'revealed' && 'is-wrong')}
+              inputMode="decimal"
+              value={val}
+              disabled={locked || ingen}
+              onChange={(e) => setVals(vals.map((x, j) => (j === i ? e.target.value : x)))}
+              onKeyDown={(e) => e.key === 'Enter' && submit()}
+              aria-label={`Løsning ${i + 1}`}
+              autoFocus={i === 0}
+            />
+            {i < vals.length - 1 && <span className="muted">eller</span>}
+          </label>
+        ))}
+        {!locked && !ingen && vals.length < 4 && (
+          <button className="btn btn-ghost btn-small" onClick={() => setVals([...vals, ''])}>
+            + Flere
+          </button>
+        )}
+      </div>
+      <label className="ingen-loesning">
+        <input type="checkbox" checked={ingen} disabled={locked} onChange={(e) => setIngen(e.target.checked)} /> Ingen løsning
+      </label>
+      <p className="muted small">Skriv hver løsning i sit eget felt. Rækkefølgen er lige meget, og tomme felter tæller ikke.</p>
+      {!locked && <CheckButton disabled={!udfyldt} onClick={submit} />}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------- brøk
+function Broek({ opgave, status, onCheck }: RProps<BroekOpgave>) {
+  const [t, setT] = useState('')
+  const [n, setN] = useState('')
+  const locked = status !== 'open'
+  const submit = () => t.trim() && onCheck(broekCorrect(opgave, t, n))
+  const c = cls('tal-input tal-input-small broek-input', status === 'correct' && 'is-correct', status === 'revealed' && 'is-wrong')
+  return (
+    <div className="answer-row">
+      <div className="broek-indtast">
+        <input className={c} inputMode="numeric" value={t} disabled={locked} onChange={(e) => setT(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submit()} aria-label="Tæller" autoFocus />
+        <div className="broek-streg" />
+        <input className={c} inputMode="numeric" value={n} disabled={locked} onChange={(e) => setN(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submit()} aria-label="Nævner" placeholder="1" />
+      </div>
+      {opgave.forkortet && <span className="muted small">Forkort brøken mest muligt.</span>}
+      {!locked && <CheckButton disabled={!t.trim()} onClick={submit} />}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------- udtryk
+function Udtryk({ opgave, status, onCheck }: RProps<UdtrykOpgave>) {
+  const [v, setV] = useState('')
+  const locked = status !== 'open'
+  const kanLaeses = v.trim() === '' || laesUdtryk(v) !== null
+  const submit = () => v.trim() && kanLaeses && onCheck(udtrykCorrect(opgave, v))
+  return (
+    <div>
+      <div className="answer-row">
+        <input
+          className={cls('tal-input udtryk-input', status === 'correct' && 'is-correct', status === 'revealed' && 'is-wrong')}
+          value={v}
+          disabled={locked}
+          onChange={(e) => setV(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && submit()}
+          placeholder="fx 5x + 3"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          aria-label="Dit udtryk"
+          autoFocus
+        />
+        {!locked && <CheckButton disabled={!v.trim() || !kanLaeses} onClick={submit} />}
+      </div>
+      {v.trim() && kanLaeses && (
+        <p className="muted small">
+          Du har skrevet: <Mat tekst={v} />
+        </p>
+      )}
+      {!kanLaeses && <p className="muted small">Udtrykket kan ikke læses endnu. Skriv x² som x^2 og √ som sqrt(…).</p>}
     </div>
   )
 }

@@ -4,8 +4,16 @@ import type { RaaOpgave, RaaTogt } from './skema'
 
 const tekst = (s: string | null | undefined) => (s && s.trim() ? s.trim() : undefined)
 
+function graf(r: RaaOpgave) {
+  const fns = r.graf_funktioner.filter((f) => f.trim())
+  if (fns.length === 0) return undefined
+  const [xMin, xMax, yMin, yMax] = r.graf_vindue.length === 4 ? r.graf_vindue : []
+  return { kind: 'graf' as const, funktioner: fns, xMin, xMax, yMin, yMax }
+}
+
 function base(r: RaaOpgave, i: number) {
   return {
+    visual: graf(r),
     id: `o${i + 1}`,
     nr: r.nr > 0 ? r.nr : undefined,
     story: r.historie,
@@ -20,7 +28,7 @@ export function tilOpgave(r: RaaOpgave, i: number): Opgave {
   const b = base(r, i)
   switch (r.type) {
     case 'tal':
-      return { ...b, type: 'tal', answer: r.svar_tal, unit: tekst(r.enhed) }
+      return { ...b, type: 'tal', answer: r.svar_tal, unit: tekst(r.enhed), decimaler: r.decimaler >= 0 ? r.decimaler : undefined }
     case 'talraekke':
       return { ...b, type: 'talraekke', sequence: r.raekke, answers: r.raekke_svar }
     case 'vaelg':
@@ -39,8 +47,14 @@ export function tilOpgave(r: RaaOpgave, i: number): Opgave {
       const x = r.x
       const y = r.y
       const size = Math.max(5, x, y)
-      return { ...b, type: 'koordinat', answer: [x, y], visual: { kind: 'koordinat', size, marker: [x, y] } }
+      return { ...b, type: 'koordinat', answer: [x, y], visual: b.visual ?? { kind: 'koordinat', size, marker: [x, y] } }
     }
+    case 'flere':
+      return { ...b, type: 'flere', answers: r.svar_liste, decimaler: r.decimaler >= 0 ? r.decimaler : undefined, variabel: tekst(r.variabel) }
+    case 'broek':
+      return { ...b, type: 'broek', answer: [r.broek_taeller, r.broek_naevner || 1], forkortet: r.forkortet || undefined }
+    case 'udtryk':
+      return { ...b, type: 'udtryk', answer: r.svar_udtryk }
   }
 }
 

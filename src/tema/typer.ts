@@ -3,7 +3,7 @@
 // spillets regler er de samme i alle temaer. Nyt tema = ny fil i src/tema/.
 // ---------------------------------------------------------------------------
 
-export type TemaId = 'pirat' | 'prinsesse' | 'rum'
+export type TemaId = 'pirat' | 'prinsesse' | 'rum' | 'detektiv' | 'sport' | 'flyt'
 
 export interface Samling {
   navn: string
@@ -16,6 +16,8 @@ export interface Tema {
   id: TemaId
   /** Navn i temavælgeren. */
   navn: string
+  /** Anbefalet til disse klassetrin (vises i temavælgeren). */
+  klasser?: string
   /** Undertitel efter "Kaptajn Tal" – null for hovedtemaet. */
   undertitel: string | null
   flag: string
@@ -45,7 +47,7 @@ export interface Tema {
   gemFaerdig: string // "Skatten er begravet!"
   gemSted: string // "Skatteøen"
   gaaTilGemmested: string // "ro i land"
-  moent: { form: 'moent' | 'aedelsten' | 'stjerne'; ydre: string; indre: string; tegn: string }
+  moent: { form: 'moent' | 'aedelsten' | 'stjerne' | 'lup' | 'medalje'; ydre: string; indre: string; tegn: string; /** Tegn på mønten, standard "$". */ symbol?: string }
   gemmested: { vand: [string, string]; kant: string; land: string; midte: string; pynt: string[] }
 
   // Figurer

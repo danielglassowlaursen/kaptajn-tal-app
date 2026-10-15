@@ -35,7 +35,7 @@ En fil kan også indeholde flere togter: `{ "togter": [ {...}, {...} ] }`.
 | `regnestykke` | nej | Det nøgne regnestykke, vises som lille etiket. |
 | `nr` | nej | Opgavens nummer på papirarket (tal eller liste af tal). |
 | `papir` | nej | Note, hvis svaret skal skrives anderledes på papiret. |
-| `visual` | nej | Tegning: `gitter`, `rektangel`, `trekant`, `lineal`, `soejler`, `koordinat`, `moenter`. |
+| `visual` | nej | Tegning: `gitter`, `rektangel`, `trekant`, `lineal`, `soejler`, `koordinat`, `moenter`, `graf`. |
 
 ## Opgavetyper
 
@@ -50,6 +50,15 @@ En fil kan også indeholde flere togter: `{ "togter": [ {...}, {...} ] }`.
 | `felter` | `total`, `cols`, `answer` (antal felter) | brøkdel af en figur |
 | `ciffer` | `numbers`, `place` (`enere`/`tiere`/`hundreder`/`tusinder`) | find tierne |
 | `koordinat` | `answer` som `[x, y]`, gerne `visual` af typen `koordinat` | |
+| `flere` | `answers` (tal i vilkårlig rækkefølge, tom liste = ingen løsning), `variabel`, `decimaler` | andengradsligning: `"answers": [2, 3]` |
+| `broek` | `answer` som `[tæller, nævner]`, `forkortet` | `"answer": [5, 6], "forkortet": true` |
+| `udtryk` | `answer` som udtryk i x | `"answer": "2x + 6"` – godkender også `2(x+3)` |
+
+`tal` kan få `"decimaler": 1`, så svar, der afrundes til det samme, godkendes (fx Pythagoras).
+En opgave kan få en graf: `"visual": { "kind": "graf", "funktioner": ["2x - 3"], "xMin": -2, "xMax": 5 }`.
+
+Matematik skrives med `^` for potens, `sqrt(…)` for kvadratrod og `/` for brøk, fx `"x^2 - 5x + 6 = 0"`.
+Appen viser det som x², √ og brøkstreg.
 
 De præcise typer står i [src/types.ts](../src/types.ts), og appens tjek ligger i
 [src/lib/togtFil.ts](../src/lib/togtFil.ts).

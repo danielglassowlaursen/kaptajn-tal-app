@@ -476,6 +476,8 @@ export default function App() {
     content = (
       <Velkommen
         navn={progress.name}
+        klasse={progress.klasse}
+        onKlasse={(k) => update({ ...progress, klasse: k })}
         onTema={(id: TemaId) => update({ ...progress, tema: id })}
         onNavn={(name) => update({ ...progress, name })}
         onForbind={forbind}
@@ -500,7 +502,7 @@ export default function App() {
       />
     )
   } else if (screen.kind === 'scan') {
-    content = <Scan kode={kode} tema={tema.id} ai={ai} onGemAi={gemAi} onGem={(t, foto) => void gemScannet(t, foto)} onExit={() => setScreen({ kind: 'home' })} />
+    content = <Scan kode={kode} tema={tema.id} klasse={progress.klasse ?? 0} ai={ai} onGemAi={gemAi} onGem={(t, foto) => void gemScannet(t, foto)} onExit={() => setScreen({ kind: 'home' })} />
   } else if (screen.kind === 'oversigt') {
     content = <Oversigt progress={progress} togter={alleTogter} fokus={screen.togtId} onStart={(togtId, startIndex) => setScreen({ kind: 'togt', togtId, startIndex })} />
   } else if (screen.kind === 'begrav') {
@@ -518,6 +520,7 @@ export default function App() {
         mineTogter={mineTogterKort}
         onName={(name) => update({ ...progress, name })}
         onTema={(id: TemaId) => update({ ...progress, tema: id })}
+        onKlasse={(k) => update({ ...progress, klasse: k })}
         onStart={(togtId, startIndex) => setScreen({ kind: 'togt', togtId, startIndex })}
         onOversigt={(togtId) => setScreen({ kind: 'oversigt', togtId })}
       />

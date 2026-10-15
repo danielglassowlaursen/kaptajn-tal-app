@@ -3,6 +3,7 @@ import type { Tema } from './typer'
 export const PIRAT: Tema = {
   id: 'pirat',
   navn: 'Pirater',
+  klasser: '1.–6. klasse',
   undertitel: null,
   flag: '🏴‍☠️',
   slogan: 'Regn dig frem til skatten!',

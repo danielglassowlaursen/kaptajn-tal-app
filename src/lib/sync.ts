@@ -185,7 +185,7 @@ export interface ScanUdkast {
 
 export async function scanArk(
   kode: string,
-  req: { udbyder: string; model: string; noegle: string; billeder: { type: string; data: string }[]; arkNavn?: string; tema?: string },
+  req: { udbyder: string; model: string; noegle: string; billeder: { type: string; data: string }[]; arkNavn?: string; tema?: string; klasse?: number },
   signal?: AbortSignal,
 ): Promise<{ status: 'ok'; udkast: ScanUdkast } | { status: 'fejl'; besked: string }> {
   try {

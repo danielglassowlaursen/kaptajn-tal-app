@@ -8,6 +8,7 @@ import { ArkOverlay } from './ArkOverlay'
 import { answerText } from '../lib/check'
 import { sekunderIDag, type Resultat, type Tyveri } from '../lib/spil'
 import { useTema } from '../tema'
+import { Mat } from './Mat'
 import { CONFIG } from '../config'
 import { afspil } from '../lib/lyd'
 import { fest } from '../lib/fest'
@@ -270,10 +271,15 @@ export function TogtView({ togt, progress, startIndex, skipIntro, iDag, onResult
           </div>
         )}
 
-        <p className="question">{opgave.question}</p>
+        <p className="question">
+          <Mat tekst={opgave.question} />
+        </p>
         {opgave.regnestykke && (
           <div className="regnestykke">
-            Regnestykke: <b>{opgave.regnestykke}</b>
+            Regnestykke:{' '}
+            <b>
+              <Mat tekst={opgave.regnestykke} />
+            </b>
           </div>
         )}
         {opgave.papir && <p className="papir-note">✏️ {opgave.papir}</p>}

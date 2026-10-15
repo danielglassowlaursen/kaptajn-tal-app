@@ -7,8 +7,9 @@
 // Et rent Togt-objekt accepteres også. Se docs/TOGT-FORMAT.md.
 // ---------------------------------------------------------------------------
 import type { Opgave, Togt } from '../types'
+import { laesUdtryk } from './matematik'
 
-const TYPER = new Set(['tal', 'talraekke', 'vaelg', 'sammenlign', 'sorter', 'valg', 'felter', 'ciffer', 'koordinat'])
+const TYPER = new Set(['tal', 'talraekke', 'vaelg', 'sammenlign', 'sorter', 'valg', 'felter', 'ciffer', 'koordinat', 'flere', 'broek', 'udtryk'])
 
 export type ParseResultat = { ok: true; togter: Togt[]; advarsler: string[] } | { ok: false; fejl: string[] }
 
@@ -53,6 +54,16 @@ export function tjekOpgave(o: Record<string, unknown>, nr: number): string[] {
       break
     case 'koordinat':
       if (!Array.isArray(o.answer) || o.answer.length !== 2 || !o.answer.every(erTal)) f.push(`${hvor}: answer skal være [x, y]`)
+      break
+    case 'flere':
+      if (!Array.isArray(o.answers) || !o.answers.every(erTal)) f.push(`${hvor}: answers skal være en liste af tal (tom = ingen løsning)`)
+      break
+    case 'broek':
+      if (!Array.isArray(o.answer) || o.answer.length !== 2 || !o.answer.every(Number.isInteger) || o.answer[1] === 0)
+        f.push(`${hvor}: answer skal være [tæller, nævner] med hele tal`)
+      break
+    case 'udtryk':
+      if (!erTekst(o.answer) || !laesUdtryk(String(o.answer))) f.push(`${hvor}: answer skal være et udtryk, der kan læses, fx "5x + 3"`)
       break
   }
   return f

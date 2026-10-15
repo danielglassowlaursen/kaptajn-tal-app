@@ -3,11 +3,14 @@ import type { Tema, TemaId } from './typer'
 import { PIRAT } from './pirat'
 import { PRINSESSE } from './prinsesse'
 import { RUM } from './rum'
+import { DETEKTIV } from './detektiv'
+import { SPORT } from './sport'
+import { FLYT } from './flyt'
 
 export type { Tema, TemaId, Samling } from './typer'
 
-export const TEMAER: Record<TemaId, Tema> = { pirat: PIRAT, prinsesse: PRINSESSE, rum: RUM }
-export const TEMA_LISTE: Tema[] = [PIRAT, PRINSESSE, RUM]
+export const TEMAER: Record<TemaId, Tema> = { pirat: PIRAT, prinsesse: PRINSESSE, rum: RUM, detektiv: DETEKTIV, sport: SPORT, flyt: FLYT }
+export const TEMA_LISTE: Tema[] = [PIRAT, PRINSESSE, RUM, DETEKTIV, SPORT, FLYT]
 
 export function hentTema(id: string | undefined): Tema {
   return TEMAER[id as TemaId] ?? PIRAT

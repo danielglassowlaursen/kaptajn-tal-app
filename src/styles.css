@@ -1562,3 +1562,166 @@ input {
   text-align: left;
   max-width: 480px;
 }
+
+/* ------------------------------------------------------------------ matematik */
+.mat sup {
+  font-size: 0.7em;
+  line-height: 0;
+}
+.broek {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  vertical-align: middle;
+  margin: 0 2px;
+  font-size: 0.85em;
+  line-height: 1.1;
+}
+.broek-t {
+  border-bottom: 1.5px solid currentColor;
+  padding: 0 2px;
+}
+.broek-n {
+  padding: 0 2px;
+}
+.flere-felter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+}
+.flere-felt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ingen-loesning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+}
+.ingen-loesning input {
+  width: 22px;
+  height: 22px;
+}
+.broek-indtast {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.broek-streg {
+  width: 100%;
+  height: 4px;
+  background: var(--ink);
+  border-radius: 2px;
+}
+.broek-input {
+  width: 90px;
+}
+.udtryk-input {
+  width: 260px;
+  max-width: 100%;
+  text-align: left;
+}
+.decimal-input {
+  width: 80px;
+  display: inline-block;
+}
+.klasse-vaelger select {
+  font: inherit;
+  font-size: 1.05rem;
+  padding: 8px 12px;
+  border: 3px solid var(--ink);
+  border-radius: 12px;
+  background: #fffdf6;
+  max-width: 220px;
+}
+
+/* ------------------------------------------------------------------ tema: detektiv */
+:root[data-tema='detektiv'] {
+  --sea: #121418;
+  --sea-2: #23262e;
+  --sea-3: #3a3f4b;
+  --parchment: #f4f1ea;
+  --parchment-2: #e6dfd0;
+  --parchment-3: #c8bda5;
+  --ink: #1d1a16;
+  --ink-soft: #5e564a;
+  --gold: #e2b13c;
+  --gold-2: #a87b16;
+  --font-head: 'Special Elite', 'Courier New', monospace;
+  --kort-1: #e9e2d0;
+  --kort-2: #d6ccb4;
+  --kort-kant: #6b5f4a;
+  --kort-rute: #a8322d;
+  --topmenu-bg: rgba(18, 20, 24, 0.94);
+  --btn-skygge: #7a5a10;
+}
+:root[data-tema='detektiv'] .coins {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+:root[data-tema='detektiv'] .title-xl {
+  color: #f4f1ea;
+  text-shadow: 0 3px 0 #a8322d, 0 8px 18px rgba(0, 0, 0, 0.6);
+}
+
+/* ------------------------------------------------------------------ tema: sport */
+:root[data-tema='sport'] {
+  --sea: #0b2a1a;
+  --sea-2: #12462b;
+  --sea-3: #1d6b3f;
+  --parchment: #f4f8f2;
+  --parchment-2: #e1ecdd;
+  --parchment-3: #b5cfae;
+  --ink: #11261a;
+  --ink-soft: #4a6450;
+  --gold: #ffd23f;
+  --gold-2: #d29f00;
+  --font-head: 'Russo One', 'Arial Black', sans-serif;
+  --kort-1: #3f9a4a;
+  --kort-2: #2f7d39;
+  --kort-kant: #ffffff;
+  --kort-rute: #ffffff;
+  --topmenu-bg: rgba(11, 42, 26, 0.94);
+  --btn-skygge: #9a7400;
+}
+:root[data-tema='sport'] .coins {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+:root[data-tema='sport'] .title-xl {
+  color: #ffd23f;
+  text-shadow: 0 3px 0 #d6363c, 0 8px 18px rgba(0, 0, 0, 0.5);
+}
+
+/* ------------------------------------------------------------------ tema: flyt */
+:root[data-tema='flyt'] {
+  --sea: #1f3a4a;
+  --sea-2: #2f5568;
+  --sea-3: #4b7a8c;
+  --parchment: #fbfaf6;
+  --parchment-2: #efebe2;
+  --parchment-3: #d6cfbf;
+  --ink: #1f2a30;
+  --ink-soft: #5b6a70;
+  --gold: #f4a259;
+  --gold-2: #d0782a;
+  --font-head: 'Fredoka', 'Trebuchet MS', sans-serif;
+  --kort-1: #f2ede2;
+  --kort-2: #e3dccb;
+  --kort-kant: #8a9aa0;
+  --kort-rute: #d0782a;
+  --topmenu-bg: rgba(31, 58, 74, 0.94);
+  --btn-skygge: #9a5517;
+}
+:root[data-tema='flyt'] .coins {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+:root[data-tema='flyt'] .title-xl {
+  color: #fbfaf6;
+  text-shadow: 0 3px 0 #d0782a, 0 8px 18px rgba(0, 0, 0, 0.45);
+}

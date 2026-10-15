@@ -22,6 +22,9 @@ const TYPENAVN: Record<Opgave['type'], string> = {
   felter: 'Brøkdel',
   ciffer: 'Pladsværdi',
   koordinat: 'Koordinat',
+  flere: 'Flere løsninger',
+  broek: 'Brøk',
+  udtryk: 'Udtryk',
 }
 
 /** Rediger facit for de typer, hvor det kan gøres med et enkelt felt. */
@@ -38,8 +41,43 @@ function FacitFelt({ o, onChange }: { o: Opgave; onChange: (o: Opgave) => void }
             aria-label="Facit"
           />
           <input className="name-input enhed-input" value={o.unit ?? ''} placeholder="enhed" onChange={(e) => onChange({ ...o, unit: e.target.value || undefined })} />
+          <label className="muted small">
+            decimaler{' '}
+            <input
+              className="name-input decimal-input"
+              inputMode="numeric"
+              value={o.decimaler ?? ''}
+              placeholder="præcis"
+              onChange={(e) => onChange({ ...o, decimaler: e.target.value === '' ? undefined : Number(e.target.value) })}
+            />
+          </label>
         </div>
       )
+    case 'flere':
+      return (
+        <div className="facit-row">
+          <input
+            className="name-input"
+            value={o.answers.join('; ').replace(/\./g, ',')}
+            placeholder="ingen løsning"
+            onChange={(e) =>
+              onChange({ ...o, answers: e.target.value.split(';').map((x) => Number(x.trim().replace(',', '.'))).filter((x, i, a) => a[i] === x && Number.isFinite(x) && e.target.value.trim() !== '') })
+            }
+            aria-label="Løsninger adskilt af semikolon"
+          />
+          <span className="muted small">adskil med ; – tomt = ingen løsning</span>
+        </div>
+      )
+    case 'broek':
+      return (
+        <div className="facit-row">
+          <input className="tal-input tal-input-small" inputMode="numeric" value={o.answer[0]} onChange={(e) => onChange({ ...o, answer: [Number(e.target.value), o.answer[1]] })} aria-label="Tæller" />
+          /
+          <input className="tal-input tal-input-small" inputMode="numeric" value={o.answer[1]} onChange={(e) => onChange({ ...o, answer: [o.answer[0], Number(e.target.value)] })} aria-label="Nævner" />
+        </div>
+      )
+    case 'udtryk':
+      return <input className="name-input" value={o.answer} onChange={(e) => onChange({ ...o, answer: e.target.value })} aria-label="Facit-udtryk" />
     case 'sammenlign':
       return (
         <div className="facit-row">

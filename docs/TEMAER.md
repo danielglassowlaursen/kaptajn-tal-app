@@ -8,6 +8,12 @@ bestemmer ord, figurer, farver, skrift og pynt.
 | Pirater | Kaptajn Tal | Papegøjen Polly | Sorte Sven | Guldmønter | Besætningsmedlem | Flåde af skibe |
 | Enhjørninger og prinsesser | Kaptajn Tal – Prinsesse Plus | Enhjørningen Luna | Trolden Grum | Ædelsten | Ven ved hoffet | Rige af slotte |
 | Rummet | Kaptajn Tal – Kommandør Komma | Robotten Bip | Rumpiraten Zorg | Stjernestøv | Astronaut | Flåde af rumskibe |
+| Detektiv | Kaptajn Tal – Detektiv Decimal | Sporhunden Rex | Mestertyven Maske | Beviser | Agent | Bureauets kontorer |
+| Sport | Kaptajn Tal – Mester Minus | Coach Kim | Rivalen Rasmus | Point | Holdkammerat | Trofæer |
+| Flyt hjemmefra | Kaptajn Tal – Egen Økonomi | Sparegrisen Penny | Uventede udgifter | Kroner | Ting til lejligheden | Boliger |
+
+Detektiv, Sport og Flyt hjemmefra er lavet til udskolingen. Flyt hjemmefra er til 9. og 10. klasse, og AI'en
+bruger realistiske danske priser, så eleven lærer om løn, skat, budget, opsparing og renter.
 
 Familien vælger tema på forsiden. Valget følger familiekoden, så alle enheder viser samme tema.
 

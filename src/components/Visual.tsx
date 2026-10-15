@@ -1,4 +1,5 @@
 import type { Visual } from '../types'
+import { laesUdtryk } from '../lib/matematik'
 
 /** Små SVG-tegninger, der hjælper med at "se" opgaven. */
 export function VisualView({ visual }: { visual: Visual }) {
@@ -17,6 +18,8 @@ export function VisualView({ visual }: { visual: Visual }) {
       return <Koordinat size={visual.size} points={visual.points} marker={visual.marker} closed={visual.closed} />
     case 'moenter':
       return <Moenter groups={visual.groups} perGroup={visual.perGroup} />
+    case 'graf':
+      return <Graf {...visual} />
   }
 }
 
@@ -242,6 +245,113 @@ function Moenter({ groups, perGroup }: { groups: number; perGroup: number }) {
       </div>
       <figcaption>
         {groups} bunker med {perGroup} i hver
+      </figcaption>
+    </figure>
+  )
+}
+
+const FARVER = ['#b23a2a', '#1f6fb2', '#2e8b57', '#8a4fbf']
+
+function Graf({
+  funktioner,
+  xMin = -5,
+  xMax = 5,
+  yMin,
+  yMax,
+  punkter,
+}: {
+  funktioner: string[]
+  xMin?: number
+  xMax?: number
+  yMin?: number
+  yMax?: number
+  punkter?: [number, number][]
+}) {
+  const W = 340
+  const H = 300
+  const pad = 26
+  const fns = funktioner.map((f) => ({ f, u: laesUdtryk(f) })).filter((x) => x.u)
+  // Find y-område automatisk, hvis det ikke er givet
+  const samples: number[] = []
+  for (const { u } of fns)
+    for (let i = 0; i <= 80; i++) {
+      const x = xMin + ((xMax - xMin) * i) / 80
+      try {
+        const y = u!.regn({ x })
+        if (Number.isFinite(y)) samples.push(y)
+      } catch {
+        /* spring over */
+      }
+    }
+  const y0 = yMin ?? Math.max(-10, Math.floor(Math.min(-1, ...samples, ...(punkter ?? []).map((p) => p[1]))))
+  const y1 = yMax ?? Math.min(10, Math.ceil(Math.max(1, ...samples, ...(punkter ?? []).map((p) => p[1]))))
+  const px = (x: number) => pad + ((x - xMin) / (xMax - xMin)) * (W - 2 * pad)
+  const py = (y: number) => H - pad - ((y - y0) / (y1 - y0)) * (H - 2 * pad)
+  const gitter = []
+  for (let x = Math.ceil(xMin); x <= xMax; x++)
+    gitter.push(<line key={'gx' + x} x1={px(x)} y1={py(y0)} x2={px(x)} y2={py(y1)} stroke={x === 0 ? INK : '#d8c9a3'} strokeWidth={x === 0 ? 1.8 : 1} />)
+  for (let y = Math.ceil(y0); y <= y1; y++)
+    gitter.push(<line key={'gy' + y} x1={px(xMin)} y1={py(y)} x2={px(xMax)} y2={py(y)} stroke={y === 0 ? INK : '#d8c9a3'} strokeWidth={y === 0 ? 1.8 : 1} />)
+  const tal = []
+  const trinX = xMax - xMin > 12 ? 2 : 1
+  for (let x = Math.ceil(xMin); x <= xMax; x += trinX)
+    if (x !== 0)
+      tal.push(
+        <text key={'tx' + x} x={px(x)} y={py(0) + 14} fontSize="10" textAnchor="middle" fill={INK}>
+          {x}
+        </text>,
+      )
+  const trinY = y1 - y0 > 12 ? 2 : 1
+  for (let y = Math.ceil(y0); y <= y1; y += trinY)
+    if (y !== 0)
+      tal.push(
+        <text key={'ty' + y} x={px(0) - 6} y={py(y) + 3} fontSize="10" textAnchor="end" fill={INK}>
+          {y}
+        </text>,
+      )
+  const kurver = fns.map(({ u }, i) => {
+    let d = ''
+    let ny = true
+    for (let k = 0; k <= 200; k++) {
+      const x = xMin + ((xMax - xMin) * k) / 200
+      let y: number
+      try {
+        y = u!.regn({ x })
+      } catch {
+        ny = true
+        continue
+      }
+      if (!Number.isFinite(y) || y < y0 - (y1 - y0) || y > y1 + (y1 - y0)) {
+        ny = true
+        continue
+      }
+      d += `${ny ? 'M' : 'L'}${px(x).toFixed(1)} ${py(y).toFixed(1)} `
+      ny = false
+    }
+    return <path key={i} d={d} fill="none" stroke={FARVER[i % FARVER.length]} strokeWidth={2.6} />
+  })
+  return (
+    <figure className="fig">
+      <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} style={{ maxWidth: '100%' }}>
+        <defs>
+          <clipPath id="graf-klip">
+            <rect x={pad} y={pad} width={W - 2 * pad} height={H - 2 * pad} />
+          </clipPath>
+        </defs>
+        <rect x={pad} y={pad} width={W - 2 * pad} height={H - 2 * pad} fill={FILL} />
+        {gitter}
+        <g clipPath="url(#graf-klip)">{kurver}</g>
+        {punkter?.map((p, i) => (
+          <circle key={i} cx={px(p[0])} cy={py(p[1])} r={4.5} fill={RED} />
+        ))}
+        {tal}
+      </svg>
+      <figcaption>
+        {fns.map(({ f }, i) => (
+          <span key={i} style={{ color: FARVER[i % FARVER.length], marginRight: 10, fontWeight: 800 }}>
+            y = {f}
+          </span>
+        ))}
       </figcaption>
     </figure>
   )

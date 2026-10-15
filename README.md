@@ -9,6 +9,9 @@ gangen.
 | 🏴‍☠️ **Kaptajn Tal** – pirater | Papegøjen Polly | Guldmønter, besætning og skibe |
 | 🦄 **Kaptajn Tal – Prinsesse Plus** – enhjørninger og prinsesser | Enhjørningen Luna | Ædelsten, hof og slotte |
 | 🚀 **Kaptajn Tal – Kommandør Komma** – rummet | Robotten Bip | Stjernestøv, besætning og rumskibe |
+| 🕵️ **Kaptajn Tal – Detektiv Decimal** – udskoling | Sporhunden Rex | Beviser, team og bureau |
+| 🏆 **Kaptajn Tal – Mester Minus** – udskoling | Coach Kim | Point, hold og trofæer |
+| 🔑 **Kaptajn Tal – Egen Økonomi** – flyt hjemmefra, 9.–10. klasse | Sparegrisen Penny | Kroner, opsparing og din første lejlighed |
 
 Se [docs/TEMAER.md](docs/TEMAER.md), hvis du vil lave dit eget tema.
 
@@ -20,8 +23,11 @@ regneark fra skolen, så svarene nemt kan skrives over på papiret bagefter.
 ## Hvad appen kan
 
 - **Togter** – ét regneark bliver til et togt med en historie til hver opgave.
-- **9 opgavetyper** – tal, talrækker, sammenlign (> < =), sortér, brøkdele, pladsværdi,
-  koordinater, valg og multiple choice, med tegninger som lineal, gitter og søjlediagram.
+- **12 opgavetyper fra 1. til 10. klasse** – tal, talrækker, sammenlign (> < =), sortér, brøkdele,
+  pladsværdi, koordinater og multiple choice, og til udskolingen: ligninger med flere løsninger
+  (andengradsligninger), brøker, algebraiske udtryk og afrundede svar. Tegninger som lineal,
+  gitter, søjlediagram og grafer af funktioner.
+- **Klassetrin** – styrer tonen, så historierne passer til en 7-årig eller en 15-årig.
 - **Polly hjælper i tre trin** – et lille hint, et større hint uden facit, og til sidst svaret
   med en frisk kommentar.
 - **Guld, begravelse og Sorte Sven** – rigtige svar giver guld, som skal begraves efter

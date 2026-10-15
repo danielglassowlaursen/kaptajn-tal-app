@@ -14,6 +14,8 @@ export type Visual =
   | { kind: 'soejler'; bars: { label: string; value: number }[]; unit?: string }
   | { kind: 'koordinat'; size: number; points?: [number, number][]; marker?: [number, number]; closed?: boolean }
   | { kind: 'moenter'; groups: number; perGroup: number } // bunker af mønter
+  /** Graf af en eller flere funktioner i x, fx ["2x + 1", "x^2 - 4"]. */
+  | { kind: 'graf'; funktioner: string[]; xMin?: number; xMax?: number; yMin?: number; yMax?: number; punkter?: [number, number][] }
 
 interface Base {
   id: string
@@ -35,6 +37,31 @@ export interface TalOpgave extends Base {
   answer: number
   unit?: string
   accept?: string[]
+  /** Afrund til så mange decimaler; svar, der afrundes til samme tal, godkendes. */
+  decimaler?: number
+}
+
+/** Flere tal som svar i vilkårlig rækkefølge, fx løsningerne til en andengradsligning. Tom liste = ingen løsning. */
+export interface FlereOpgave extends Base {
+  type: 'flere'
+  answers: number[]
+  decimaler?: number
+  /** Fx "x" – vises foran felterne. */
+  variabel?: string
+}
+
+/** Svar som brøk. Forkortede og uforkortede brøker med samme værdi godkendes. */
+export interface BroekOpgave extends Base {
+  type: 'broek'
+  answer: [number, number]
+  /** Kræv at brøken er forkortet mest muligt. */
+  forkortet?: boolean
+}
+
+/** Svar som et algebraisk udtryk, fx "5x + 3". Godkendes, hvis det er lig facit for alle x. */
+export interface UdtrykOpgave extends Base {
+  type: 'udtryk'
+  answer: string
 }
 
 /** Udfyld de tomme felter i en talrække. null = tomt felt. */
@@ -104,6 +131,9 @@ export type Opgave =
   | FelterOpgave
   | CifferOpgave
   | KoordinatOpgave
+  | FlereOpgave
+  | BroekOpgave
+  | UdtrykOpgave
 
 export interface Togt {
   id: string
@@ -170,5 +200,7 @@ export interface Progress {
   /** Hvornår fremgangen sidst blev ændret (ms). Nyeste vinder ved synk. */
   updatedAt: number
   /** Familiens valgte tema (følger med familiekoden). */
-  tema?: 'pirat' | 'prinsesse' | 'rum'
+  tema?: 'pirat' | 'prinsesse' | 'rum' | 'detektiv' | 'sport' | 'flyt'
+  /** Klassetrin (1–10). Styrer tonen i AI'ens historier. */
+  klasse?: number
 }

@@ -3,6 +3,7 @@ import type { Tema } from './typer'
 export const RUM: Tema = {
   id: 'rum',
   navn: 'Rummet',
+  klasser: '3.–8. klasse',
   undertitel: 'Kommandør Komma',
   flag: '🚀',
   slogan: 'Regn dig vej gennem galaksen!',

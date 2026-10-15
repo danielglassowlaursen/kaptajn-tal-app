@@ -14,7 +14,7 @@ const nul = { type: 'null' }
 const nullable = (s: object) => ({ anyOf: [s, nul] })
 const strs = { type: 'array', items: str }
 
-export const OPGAVETYPER = ['tal', 'talraekke', 'vaelg', 'sammenlign', 'sorter', 'valg', 'felter', 'ciffer', 'koordinat'] as const
+export const OPGAVETYPER = ['tal', 'talraekke', 'vaelg', 'sammenlign', 'sorter', 'valg', 'felter', 'ciffer', 'koordinat', 'flere', 'broek', 'udtryk'] as const
 
 const opgave = {
   type: 'object',
@@ -44,13 +44,23 @@ const opgave = {
     plads: { type: 'string', enum: ['', 'enere', 'tiere', 'hundreder', 'tusinder'] },
     x: int,
     y: int,
+    decimaler: int,
+    svar_liste: { type: 'array', items: num },
+    variabel: str,
+    broek_taeller: int,
+    broek_naevner: int,
+    forkortet: { type: 'boolean' },
+    svar_udtryk: str,
+    graf_funktioner: strs,
+    graf_vindue: { type: 'array', items: num },
     usikker: { type: 'boolean' },
     usikker_grund: str,
   },
   required: [
     'nr', 'type', 'historie', 'spoergsmaal', 'regnestykke', 'hint_1', 'hint_2', 'papir', 'enhed', 'svar_tal', 'svar_tekst',
     'raekke', 'raekke_svar', 'valgmuligheder', 'rigtige', 'sorteret', 'tal_liste', 'venstre', 'hoejre', 'felter_total',
-    'felter_kolonner', 'plads', 'x', 'y', 'usikker', 'usikker_grund',
+    'felter_kolonner', 'plads', 'x', 'y', 'decimaler', 'svar_liste', 'variabel', 'broek_taeller', 'broek_naevner', 'forkortet',
+    'svar_udtryk', 'graf_funktioner', 'graf_vindue', 'usikker', 'usikker_grund',
   ],
 }
 
@@ -93,6 +103,15 @@ export interface RaaOpgave {
   plads: '' | 'enere' | 'tiere' | 'hundreder' | 'tusinder'
   x: number
   y: number
+  decimaler: number // -1 = præcist svar
+  svar_liste: number[]
+  variabel: string
+  broek_taeller: number
+  broek_naevner: number
+  forkortet: boolean
+  svar_udtryk: string
+  graf_funktioner: string[]
+  graf_vindue: number[] // [xMin, xMax, yMin, yMax] eller tom
   usikker: boolean
   usikker_grund: string
 }

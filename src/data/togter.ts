@@ -129,10 +129,79 @@ const DEMO_RUM: Togt[] = DEMO_PIRAT.map((t) => ({
   })),
 }))
 
+// Prøvetogt for udskolingen (temaerne detektiv, sport og flyt hjemmefra). Viser de nye
+// opgavetyper: ligning, andengradsligning, brøk, udtryk, Pythagoras med afrunding og graf.
+const UDSKOLING_GRUND: Togt = {
+  id: 'demo-udskoling',
+  title: '',
+  subtitle: 'Prøvetogt',
+  emoji: '',
+  intro: '',
+  opgaver: [
+      { id: 'u-01', type: 'tal', nr: 1, story: '', question: '', regnestykke: '3x + 7 = 22', answer: 5,
+        hints: ['Få x til at stå alene. Hvad skal væk først?', 'Træk 7 fra på begge sider, så står der 3x = 15. Hvad skal x så være?'] },
+      { id: 'u-02', type: 'flere', nr: 2, story: '', question: 'Hvilke tal løser ligningen?', regnestykke: 'x^2 - 5x + 6 = 0', answers: [2, 3], variabel: 'x',
+        hints: ['En andengradsligning kan have to løsninger. Find to tal, der ganget giver 6 og lagt sammen giver 5.', 'Skriv ligningen som (x − a)(x − b) = 0, hvor a · b = 6 og a + b = 5. Prøv dig frem med små tal.'] },
+      { id: 'u-03', type: 'broek', nr: 3, story: '', question: '', regnestykke: '2/3 + 1/6', answer: [5, 6], forkortet: true,
+        hints: ['Gør nævnerne ens, før du lægger sammen.', 'Omskriv 2/3 til sjettedele: 2/3 = 4/6. Læg så 1/6 til, og forkort til sidst, hvis du kan.'] },
+      { id: 'u-04', type: 'udtryk', nr: 4, story: '', question: 'Reducér udtrykket.', regnestykke: '3(x + 2) - x', answer: '2x + 6',
+        hints: ['Gang parentesen ud først.', '3(x + 2) = 3x + 6. Træk derefter x fra 3x.'] },
+      { id: 'u-05', type: 'tal', nr: 5, story: '', question: '', regnestykke: 'sqrt(4^2 + 7^2)', answer: Math.sqrt(65), decimaler: 1,
+        hints: ['Det er en retvinklet trekant. Hvilken sætning bruger man til den længste side?', 'Brug Pythagoras: læg 4² og 7² sammen, og tag kvadratroden af resultatet.'] },
+      { id: 'u-06', type: 'tal', nr: 6, story: '', question: '', regnestykke: '2x - 3 = 0', answer: 1.5,
+        visual: { kind: 'graf', funktioner: ['2x - 3'], xMin: -2, xMax: 5, yMin: -5, yMax: 6 },
+        hints: ['Hvad er y, der hvor en linje rammer x-aksen?', 'Sæt 2x − 3 = 0. Læg 3 til på begge sider, og del så med 2.'] },
+    ] as Togt['opgaver'],
+}
+
+type Tekster = Record<string, { story: string; question?: string; unit?: string }>
+
+function udskoling(title: string, emoji: string, intro: string, tekster: Tekster): Togt[] {
+  return [
+    {
+      ...UDSKOLING_GRUND,
+      title,
+      emoji,
+      intro,
+      opgaver: UDSKOLING_GRUND.opgaver.map((o) => ({ ...o, ...tekster[o.id], question: tekster[o.id]?.question ?? o.question })) as Togt['opgaver'],
+    },
+  ]
+}
+
+const DEMO_DETEKTIV = udskoling('Sagen om det tomme pengeskab', '🔐', 'En prøvesag med seks opgaver fra udskolingen. Rigtige sager laver du ved at scanne dit eget regneark.', {
+  'u-01': { story: 'Tyven efterlod 3 ens nøgleknipper og 7 løse nøgler – i alt 22 nøgler.', question: 'Hvor mange nøgler sidder der på hvert knippe? (Find x)' },
+  'u-02': { story: 'Koden til pengeskabet er løsningerne til ligningen på en krøllet seddel.' },
+  'u-03': { story: 'Rex har snuset 2/3 af gyden igennem og derefter 1/6 mere.', question: 'Hvor stor en del af gyden har Rex undersøgt? Skriv som forkortet brøk.' },
+  'u-04': { story: 'I den mistænktes notesbog står udtrykket 3(x + 2) − x. Det skal gøres kortere, før det giver mening.' },
+  'u-05': { story: 'Tyven løb 4 km mod øst og derefter 7 km mod nord.', question: 'Hvor langt er der i fugleflugt fra start til slut? Afrund til én decimal.', unit: 'km' },
+  'u-06': { story: 'Overvågningskameraet viser tyvens rute som linjen y = 2x − 3.', question: 'Ved hvilken x-værdi krydser ruten x-aksen?' },
+})
+
+const DEMO_SPORT = udskoling('Cupfinalen', '⚽', 'En prøvekamp med seks opgaver fra udskolingen. Rigtige kampe laver du ved at scanne dit eget regneark.', {
+  'u-01': { story: 'Holdet fik samme antal point i 3 kampe og 7 bonuspoint – i alt 22 point.', question: 'Hvor mange point fik holdet pr. kamp? (Find x)' },
+  'u-02': { story: 'Trænerens taktiktavle viser en ligning. Løsningerne er numrene på de to spillere, der skal starte.' },
+  'u-03': { story: 'Løberen har gennemført 2/3 af banen og derefter 1/6 mere.', question: 'Hvor stor en del af banen har hun løbet? Skriv som forkortet brøk.' },
+  'u-04': { story: 'Statistikeren har skrevet antallet af afleveringer som 3(x + 2) − x.' },
+  'u-05': { story: 'Kantspilleren løber 4 m langs sidelinjen og 7 m ind mod banen.', question: 'Hvor langt er der i lige linje? Afrund til én decimal.', unit: 'm' },
+  'u-06': { story: 'Boldens bane i et skud tegnes som linjen y = 2x − 3.', question: 'Ved hvilken x-værdi rammer linjen x-aksen?' },
+})
+
+const DEMO_FLYT = udskoling('Første måned i egen lejlighed', '📦', 'En prøvemåned med seks opgaver fra udskolingen. Rigtige måneder laver du ved at scanne dit eget regneark.', {
+  'u-01': { story: 'Du har 3 ens streamingtjenester og betaler 7 kr. i gebyr. I alt koster det 22 kr. om ugen.', question: 'Hvad koster én tjeneste om ugen? (Find x)', unit: 'kr.' },
+  'u-02': { story: 'I en øvelse om lån bruger banken ligningen her. Løsningerne er antal år.' },
+  'u-03': { story: 'Du bruger 2/3 af lønnen på husleje og mad og 1/6 på transport.', question: 'Hvor stor en del af lønnen er brugt? Skriv som forkortet brøk.' },
+  'u-04': { story: 'Din mobilregning er 3(x + 2) − x kr., hvor x er antal GB, du bruger.' },
+  'u-05': { story: 'Fra lejligheden cykler du 4 km mod øst og 7 km mod nord til arbejde.', question: 'Hvor langt er der i fugleflugt? Afrund til én decimal.', unit: 'km' },
+  'u-06': { story: 'Din opsparing følger linjen y = 2x − 3 (tusind kr. efter x måneder).', question: 'Efter hvor mange måneder står opsparingen præcis på 0 kr.?' },
+})
+
 /** Prøvetogtet i det valgte tema. */
 export function demoTogter(tema: TemaId): Togt[] {
+  if (tema === 'detektiv') return DEMO_DETEKTIV
+  if (tema === 'sport') return DEMO_SPORT
+  if (tema === 'flyt') return DEMO_FLYT
   return tema === 'prinsesse' ? DEMO_PRINSESSE : tema === 'rum' ? DEMO_RUM : DEMO_PIRAT
 }
 
 /** Id'er der er reserveret til indbyggede togter. */
-export const DEMO_IDS = new Set(DEMO_PIRAT.map((t) => t.id))
+export const DEMO_IDS = new Set([...DEMO_PIRAT.map((t) => t.id), UDSKOLING_GRUND.id])

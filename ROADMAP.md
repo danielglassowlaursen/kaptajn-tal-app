@@ -9,6 +9,7 @@ Kaptajn Tal er ved at blive bygget om fra en familie-prototype til en app, alle 
 | 2 | Scan et regneark med egen AI-nøgle (Anthropic, OpenAI eller OpenRouter), gennemse og ret, facit-tjek | ✅ |
 | 3 | Tema-system: Pirater, Prinsesse Plus (enhjørninger og prinsesser) | ✅ |
 | 4 | Tema 3: Kommandør Komma (rummet), onboarding, rate-limit, "Deploy to Cloudflare" | ✅ |
+| 4b | Udskoling: andengradsligninger, brøker, udtryk, afrunding, grafer, klassetrin, temaerne Detektiv, Sport og Flyt hjemmefra | ✅ |
 | 5 | Valgfri betalt plan med hostet AI | Senere |
 
 ## Principper

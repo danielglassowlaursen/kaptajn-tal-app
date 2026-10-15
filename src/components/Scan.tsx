@@ -10,6 +10,7 @@ import { useTema, type TemaId } from '../tema'
 interface Props {
   kode: string | null
   tema: TemaId
+  klasse: number
   ai: Ai
   onGemAi: (a: Ai) => void
   /** Gem det godkendte togt sammen med det første foto. */
@@ -32,7 +33,7 @@ const POLLY_VENTER = [
 ]
 
 /** Scan et ark: fotos → AI → gennemse → gem. */
-export function Scan({ kode, tema, ai, onGemAi, onGem, onExit }: Props) {
+export function Scan({ kode, tema, klasse, ai, onGemAi, onGem, onExit }: Props) {
   const t = useTema()
   const ventetekster = POLLY_VENTER.map((x) => x.replace('Polly', t.hjaelper.navn).replace('kikkert', t.id === 'pirat' ? 'kikkert' : 'tryllestav'))
   const [fotos, setFotos] = useState<Foto[]>([])
@@ -79,7 +80,7 @@ export function Scan({ kode, tema, ai, onGemAi, onGem, onExit }: Props) {
     const billeder = await Promise.all(fotos.map(async (f) => ({ type: 'image/jpeg', data: await tilBase64(f.blob) })))
     const r = await scanArk(
       kode,
-      { udbyder: ai.udbyder, model: ai.modeller[ai.udbyder], noegle: ai.noegler[ai.udbyder] ?? '', billeder, arkNavn: arkNavn.trim() || undefined, tema },
+      { udbyder: ai.udbyder, model: ai.modeller[ai.udbyder], noegle: ai.noegler[ai.udbyder] ?? '', billeder, arkNavn: arkNavn.trim() || undefined, tema, klasse },
       abort.current.signal,
     )
     if (r.status === 'fejl') {

@@ -3,6 +3,7 @@ import type { Progress, Togt } from '../types'
 import { doneIds, togtCoins } from '../lib/progress'
 import { Moent } from './Moent'
 import { appNavn, TEMA_LISTE, useTema, type TemaId } from '../tema'
+import { KlasseVaelger } from './KlasseVaelger'
 
 interface Props {
   progress: Progress
@@ -11,12 +12,13 @@ interface Props {
   mineTogter?: ReactNode
   onName: (name: string) => void
   onTema: (id: TemaId) => void
+  onKlasse: (k: number) => void
   onStart: (togtId: string, startIndex: number) => void
   onOversigt: (togtId: string) => void
 }
 
 /** Forsiden: hilsen + togter. Skat og besætning har deres egne sider i topmenuen. */
-export function Home({ progress, togter, kodeKort, mineTogter, onName, onTema, onStart, onOversigt }: Props) {
+export function Home({ progress, togter, kodeKort, mineTogter, onName, onTema, onKlasse, onStart, onOversigt }: Props) {
   const tm = useTema()
   const name = progress.name.trim()
   return (
@@ -35,6 +37,7 @@ export function Home({ progress, togter, kodeKort, mineTogter, onName, onTema, o
           </span>
           <input className="name-input" value={progress.name} onChange={(e) => onName(e.target.value)} placeholder="Skriv dit navn" maxLength={24} />
         </label>
+        <KlasseVaelger klasse={progress.klasse} onKlasse={onKlasse} />
         <div className="tema-valg">
           <span className="felt-label">Vælg tema</span>
           <div className="udbyder-valg" role="radiogroup" aria-label="Tema">
