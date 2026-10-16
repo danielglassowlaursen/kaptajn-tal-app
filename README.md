@@ -36,6 +36,9 @@ regneark fra skolen, så svarene nemt kan skrives over på papiret bagefter.
 - **Oversigt** – facit og hvor meget hjælp der blev brugt, pr. ark og opgavenummer.
 - **Familiekode** – fremgangen synker mellem iPad, telefon og computer, med historik og
   sikkerhedskopi som fil.
+- **Gendannelseskode** – når en familie opretter en kode, får de også en gendannelseskode og
+  et kodekort til at printe. Glemmer de familiekoden, finder gendannelseskoden den igen.
+  Serveren gemmer kun et fingeraftryk (SHA-256) af gendannelseskoden – ingen e-mail, ingen konto.
 - **Lyd og konfetti** – kan slås fra.
 
 Appen leveres **uden opgaver**, bortset fra et lille prøvetogt. Familier tilføjer deres egne

@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react'
 import type { Progress } from '../types'
 import type { GemtTogt } from '../lib/togtStore'
-import { KODE_RE, hentHistorik, lavKode, normaliserKode, type HistorikPunkt, type SyncState } from '../lib/sync'
+import { KODE_RE, gendanMedKode, hentHistorik, lavGendannelse, lavKode, normaliserKode, type HistorikPunkt, type SyncState } from '../lib/sync'
+import { GemKoder } from './GemKoder'
 
 export type ForbindResultat = { status: 'oprettet' } | { status: 'hentet' } | { status: 'konflikt'; cloud: Progress } | { status: 'fejl'; besked: string }
 
@@ -85,11 +86,46 @@ export function FamilieKode({ kode, sync, onForbind, onLoes, onAfbryd, onEksport
   const [travl, setTravl] = useState(false)
   const [besked, setBesked] = useState<string | null>(null)
   const [konflikt, setKonflikt] = useState<{ kode: string; cloud: Progress } | null>(null)
+  // Gendannelseskode
+  const [visGk, setVisGk] = useState<{ familiekode: string; gk: string } | null>(null)
+  const [gkFindes, setGkFindes] = useState<number | null>(null)
+  const [gkBesked, setGkBesked] = useState<string | null>(null)
+  const [glemt, setGlemt] = useState(false)
+  const [gkInput, setGkInput] = useState('')
+
+  async function hentGendannelse(k: string, ny = false) {
+    setGkBesked(null)
+    const r = await lavGendannelse(k, ny)
+    if (r.status === 'ok') {
+      setVisGk({ familiekode: k, gk: r.gendannelseskode })
+      setGkFindes(null)
+    } else if (r.status === 'findes') setGkFindes(r.oprettet)
+    else setGkBesked(r.besked)
+  }
+
+  async function gendanMedGk() {
+    setTravl(true)
+    setBesked(null)
+    const r = await gendanMedKode(gkInput)
+    if (r.status === 'fejl') {
+      setTravl(false)
+      setBesked(r.besked)
+      return
+    }
+    const f = await onForbind(r.kode)
+    setTravl(false)
+    if (f.status === 'konflikt') return setKonflikt({ kode: r.kode, cloud: f.cloud })
+    if (f.status === 'fejl') return setBesked(f.besked)
+    setGlemt(false)
+    setGkInput('')
+    setRedigerer(false)
+    setBesked(`Fundet! I er forbundet til familiekoden ${r.kode} igen.`)
+  }
 
   async function forbind() {
     const k = normaliserKode(input)
     if (!KODE_RE.test(k)) {
-      setBesked('Koden skal være 6–32 tegn: små bogstaver, tal og bindestreg.')
+      setBesked('Koden skal være 6–40 tegn: små bogstaver, tal og bindestreg.')
       return
     }
     setTravl(true)
@@ -107,6 +143,7 @@ export function FamilieKode({ kode, sync, onForbind, onLoes, onAfbryd, onEksport
     setBesked(r.status === 'oprettet' ? `Koden ${k} er oprettet, og skatten er gemt i skyen.` : `Skatten under ${k} er hentet til denne enhed.`)
     setRedigerer(false)
     setInput('')
+    if (r.status === 'oprettet') void hentGendannelse(k)
   }
 
   const status =
@@ -162,8 +199,63 @@ export function FamilieKode({ kode, sync, onForbind, onLoes, onAfbryd, onEksport
             )}
           </div>
           <p className="muted small">Alle, der kender koden, kan se og ændre skatten. Vælg noget, kun familien kender.</p>
+          {!glemt ? (
+            <button className="link-btn" onClick={() => setGlemt(true)}>
+              Glemt familiekoden?
+            </button>
+          ) : (
+            <div className="glemt">
+              <p className="muted small">Skriv jeres gendannelseskode fra kodekortet (16 tegn, fx ABCD-EFGH-JKLM-NPQR).</p>
+              <div className="kode-row">
+                <input
+                  className="name-input kode-input"
+                  value={gkInput}
+                  onChange={(e) => setGkInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && void gendanMedGk()}
+                  placeholder="ABCD-EFGH-JKLM-NPQR"
+                  autoCapitalize="characters"
+                  autoCorrect="off"
+                  spellCheck={false}
+                />
+                <button className="btn btn-primary" disabled={travl || gkInput.replace(/[^a-z0-9]/gi, '').length !== 16} onClick={() => void gendanMedGk()}>
+                  Find koden
+                </button>
+              </div>
+              <p className="muted small">Har I hverken familiekoden eller gendannelseskoden, kan skatten desværre ikke findes igen – appen gemmer ingen e-mail eller konto.</p>
+            </div>
+          )}
         </>
       )}
+
+      {kode && !redigerer && !visGk && (
+        <div className="gk-sektion">
+          {gkFindes === null ? (
+            <button className="btn btn-ghost btn-small" onClick={() => void hentGendannelse(kode)}>
+              🔐 Gendannelseskode
+            </button>
+          ) : (
+            <div className="glemt">
+              <p className="muted small">
+                I lavede en gendannelseskode {new Date(gkFindes).toLocaleDateString('da-DK')}. Af sikkerhedshensyn kan den ikke vises igen. Har I mistet den, så lav en ny –
+                den gamle holder så op med at virke.
+              </p>
+              <div className="btn-row left">
+                <button
+                  className="btn btn-ghost btn-small"
+                  onClick={() => window.confirm('Lav en ny gendannelseskode? Den gamle holder op med at virke.') && void hentGendannelse(kode, true)}
+                >
+                  Lav en ny gendannelseskode
+                </button>
+                <button className="btn btn-ghost btn-small" onClick={() => setGkFindes(null)}>
+                  Luk
+                </button>
+              </div>
+            </div>
+          )}
+          {gkBesked && <p className="muted small">{gkBesked}</p>}
+        </div>
+      )}
+      {visGk && <GemKoder familiekode={visGk.familiekode} gendannelseskode={visGk.gk} onFaerdig={() => setVisGk(null)} />}
 
       {konflikt && (
         <div className="konflikt">

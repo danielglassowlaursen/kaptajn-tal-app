@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { appNavn, TEMA_LISTE, useTema, type TemaId } from '../tema'
-import { KODE_RE, lavKode, normaliserKode } from '../lib/sync'
+import { KODE_RE, gendanMedKode, lavGendannelse, lavKode, normaliserKode } from '../lib/sync'
+import { GemKoder } from './GemKoder'
 import type { ForbindResultat } from './FamilieKode'
 import { KlasseVaelger } from './KlasseVaelger'
 
@@ -14,7 +15,7 @@ interface Props {
   onFaerdig: (valg: 'demo' | 'scan' | 'forside') => void
 }
 
-type Trin = 'tema' | 'navn' | 'kode' | 'klar'
+type Trin = 'tema' | 'navn' | 'kode' | 'gem' | 'klar'
 const TRIN: Trin[] = ['tema', 'navn', 'kode', 'klar']
 
 /** Første gang: vælg univers, navn og familiekode – og se, hvad man kan nu. */
@@ -26,7 +27,9 @@ export function Velkommen({ navn, klasse, onKlasse, onTema, onNavn, onForbind, o
   const [travl, setTravl] = useState(false)
   const [fejl, setFejl] = useState<string | null>(null)
   const [forbundet, setForbundet] = useState<string | null>(null)
-  const nr = TRIN.indexOf(trin) + 1
+  const [gk, setGk] = useState<string | null>(null)
+  const [glemt, setGlemt] = useState(false)
+  const nr = trin === 'gem' ? 3 : TRIN.indexOf(trin) + 1
 
   async function forbind(k: string) {
     const ren = normaliserKode(k)
@@ -40,7 +43,24 @@ export function Velkommen({ navn, klasse, onKlasse, onTema, onNavn, onForbind, o
     setTravl(false)
     if (r.status === 'fejl') return setFejl(r.besked)
     setForbundet(ren)
+    if (kodeValg === 'ny') {
+      const g = await lavGendannelse(ren)
+      if (g.status === 'ok') {
+        setGk(g.gendannelseskode)
+        setTrin('gem')
+        return
+      }
+    }
     setTrin('klar')
+  }
+
+  async function gendan() {
+    setTravl(true)
+    setFejl(null)
+    const r = await gendanMedKode(kode)
+    setTravl(false)
+    if (r.status === 'fejl') return setFejl(r.besked)
+    await forbind(r.kode)
   }
 
   return (
@@ -134,7 +154,39 @@ export function Velkommen({ navn, klasse, onKlasse, onTema, onNavn, onForbind, o
               </div>
             </>
           )}
-          {kodeValg === 'har' && (
+          {kodeValg === 'har' && glemt && (
+            <>
+              <p className="muted small">Skriv gendannelseskoden fra jeres kodekort (16 tegn).</p>
+              <div className="kode-row">
+                <input
+                  className="name-input kode-input"
+                  value={kode}
+                  onChange={(e) => setKode(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && void gendan()}
+                  placeholder="ABCD-EFGH-JKLM-NPQR"
+                  autoCapitalize="characters"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  autoFocus
+                />
+                <button className="btn btn-primary" disabled={travl || kode.replace(/[^a-z0-9]/gi, '').length !== 16} onClick={() => void gendan()}>
+                  {travl ? 'Finder …' : 'Find koden'}
+                </button>
+              </div>
+            </>
+          )}
+          {kodeValg === 'har' && !glemt && (
+            <button
+              className="link-btn"
+              onClick={() => {
+                setGlemt(true)
+                setKode('')
+              }}
+            >
+              Glemt familiekoden?
+            </button>
+          )}
+          {kodeValg === 'har' && !glemt && (
             <div className="kode-row">
               <input
                 className="name-input kode-input"
@@ -156,6 +208,12 @@ export function Velkommen({ navn, klasse, onKlasse, onTema, onNavn, onForbind, o
           <button className="btn btn-ghost btn-small" onClick={() => setTrin('klar')}>
             Spring over – kun på denne enhed
           </button>
+        </div>
+      )}
+
+      {trin === 'gem' && gk && forbundet && (
+        <div className="card center">
+          <GemKoder familiekode={forbundet} gendannelseskode={gk} onFaerdig={() => setTrin('klar')} />
         </div>
       )}
 

@@ -198,3 +198,31 @@ export async function scanArk(
     return { status: 'fejl', besked: 'Ingen forbindelse til serveren.' }
   }
 }
+
+// ------------------------------------------------------------ gendannelseskode
+export type GendannelseSvar = { status: 'ok'; gendannelseskode: string } | { status: 'findes'; oprettet: number } | { status: 'fejl'; besked: string }
+
+/** Lav familiens gendannelseskode (eller en ny, som erstatter den gamle). Koden vises kun denne ene gang. */
+export async function lavGendannelse(kode: string, ny = false): Promise<GendannelseSvar> {
+  try {
+    const r = await fetch(`${base(kode)}/gendannelse`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ny }) })
+    const j = (await r.json().catch(() => ({}))) as { gendannelseskode?: string; oprettet?: number; fejl?: string }
+    if (r.status === 409) return { status: 'findes', oprettet: j.oprettet ?? 0 }
+    if (!r.ok || !j.gendannelseskode) return { status: 'fejl', besked: j.fejl ?? `Serveren svarede ${r.status}` }
+    return { status: 'ok', gendannelseskode: j.gendannelseskode }
+  } catch {
+    return { status: 'fejl', besked: 'Ingen forbindelse' }
+  }
+}
+
+/** Find familiekoden ud fra gendannelseskoden. */
+export async function gendanMedKode(gendannelseskode: string): Promise<{ status: 'ok'; kode: string } | { status: 'fejl'; besked: string }> {
+  try {
+    const r = await fetch('/api/gendan', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ gendannelseskode }) })
+    const j = (await r.json().catch(() => ({}))) as { kode?: string; fejl?: string }
+    if (!r.ok || !j.kode) return { status: 'fejl', besked: j.fejl ?? `Serveren svarede ${r.status}` }
+    return { status: 'ok', kode: j.kode }
+  } catch {
+    return { status: 'fejl', besked: 'Ingen forbindelse' }
+  }
+}

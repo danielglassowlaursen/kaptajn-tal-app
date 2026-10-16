@@ -12,6 +12,8 @@
 //   PUT  /api/f/:kode/ark/:id           (billede) -> { ok }
 //   GET  /api/f/:kode/ark/:id           -> billedet
 //   DELETE /api/f/:kode/ark/:id         -> { ok }
+//   POST /api/f/:kode/gendannelse       { ny? } -> { gendannelseskode } (vises kun én gang) | 409 findes
+//   POST /api/gendan                    { gendannelseskode } -> { kode } | 404
 //   POST /api/f/:kode/scan              { udbyder, model, noegle, billeder, arkNavn?, tema? }
 //                                       -> { togt, usikre, forbrug } (et UDKAST – gemmes ikke)
 //
@@ -86,6 +88,25 @@ async function grænse(l: RateLimit | undefined, key: string): Promise<boolean> 
 
 const forMange = () => json({ fejl: 'For mange forespørgsler lige nu. Vent et øjeblik, og prøv igen.' }, 429)
 
+// ------------------------------------------------------------ gendannelseskode
+const GK_TEGN = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // uden O/0 og I/1, så den er let at skrive af
+
+function lavGendannelseskode(): string {
+  const b = new Uint8Array(16)
+  crypto.getRandomValues(b)
+  const t = [...b].map((x) => GK_TEGN[x % GK_TEGN.length]).join('')
+  return t.match(/.{4}/g)!.join('-')
+}
+
+function normaliserGk(s: string): string {
+  return s.toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/O/g, '0').replace(/I/g, '1')
+}
+
+async function hashGk(s: string): Promise<string> {
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('kaptajn-tal:' + normaliserGk(s)))
+  return [...new Uint8Array(d)].map((x) => x.toString(16).padStart(2, '0')).join('')
+}
+
 // ------------------------------------------------------------ familie
 
 async function findFamilie(env: Env, kode: string): Promise<string | null> {
@@ -158,7 +179,20 @@ export default {
     if (!(await grænse(env.API_LIMIT, ip))) return forMange()
     await sikrSkema(env)
 
-    const m = url.pathname.match(/^\/api\/f\/([^/]+)\/(progress|historik|gendan|togter|ark|scan)(?:\/([^/]+))?$/)
+    // Gendan familiekoden med gendannelseskoden (tæller i den strenge gætte-grænse)
+    if (url.pathname === '/api/gendan' && request.method === 'POST') {
+      if (!(await grænse(env.GAET_LIMIT, ip))) return forMange()
+      const body = await laesJson<{ gendannelseskode?: unknown }>(request)
+      if (body instanceof Response) return body
+      if (typeof body.gendannelseskode !== 'string' || normaliserGk(body.gendannelseskode).length !== 16) return json({ fejl: 'Gendannelseskoden har 16 tegn, fx ABCD-EFGH-JKLM-NPQR.' }, 400)
+      const row = await env.DB.prepare('SELECT k.kode FROM gendannelse g JOIN koder k ON k.familie_id = g.familie_id WHERE g.hash = ? ORDER BY k.oprettet LIMIT 1')
+        .bind(await hashGk(body.gendannelseskode))
+        .first<{ kode: string }>()
+      if (!row) return json({ fejl: 'Ingen familie med den gendannelseskode.' }, 404)
+      return json({ kode: row.kode })
+    }
+
+    const m = url.pathname.match(/^\/api\/f\/([^/]+)\/(progress|historik|gendan|togter|ark|scan|gendannelse)(?:\/([^/]+))?$/)
     if (!m) return json({ fejl: 'Ukendt adresse' }, 404)
     const kode = decodeURIComponent(m[1]).toLowerCase()
     const del = m[2]
@@ -223,6 +257,21 @@ export default {
       await upsertProgress(env, fid, text, nu)
       await gemHistorik(env, fid, text, nu, fingerprint(progress), true)
       return json({ progress, updatedAt: nu })
+    }
+
+    // ---------------- gendannelseskode (lav eller lav ny)
+    if (del === 'gendannelse' && !id && metode === 'POST' && fid) {
+      const body = await laesJson<{ ny?: unknown }>(request)
+      if (body instanceof Response) return body
+      const findes = await env.DB.prepare('SELECT oprettet FROM gendannelse WHERE familie_id = ?').bind(fid).first<{ oprettet: number }>()
+      if (findes && body.ny !== true) return json({ fejl: 'findes', oprettet: findes.oprettet }, 409)
+      const gk = lavGendannelseskode()
+      await env.DB.prepare(
+        'INSERT INTO gendannelse (familie_id, hash, oprettet) VALUES (?, ?, ?) ON CONFLICT(familie_id) DO UPDATE SET hash = excluded.hash, oprettet = excluded.oprettet',
+      )
+        .bind(fid, await hashGk(gk), Date.now())
+        .run()
+      return json({ gendannelseskode: gk })
     }
 
     // ---------------- togter

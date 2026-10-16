@@ -56,3 +56,10 @@ CREATE TABLE IF NOT EXISTS forbrug (
   pris_usd REAL NOT NULL
 );
 CREATE INDEX IF NOT EXISTS forbrug_familie ON forbrug (familie_id, tid);
+
+-- Gendannelseskode: kun en SHA-256 af koden gemmes. Bruges til at finde familiekoden igen.
+CREATE TABLE IF NOT EXISTS gendannelse (
+  familie_id TEXT PRIMARY KEY,
+  hash TEXT NOT NULL UNIQUE,
+  oprettet INTEGER NOT NULL
+);
