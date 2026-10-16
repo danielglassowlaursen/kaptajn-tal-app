@@ -6,3 +6,5 @@ backups
 .wrangler
 .dev.vars
 wrangler.local.jsonc
+.env
+.env.*
