@@ -77,6 +77,8 @@ export const PRINSESSE: Tema = {
     { navn: 'Skyernes Palads', emoji: '☁️', crew: 28 },
   ],
 
+  traening: { navn: 'Ridebanen', emoji: '🐴', intro: 'Luna har lagt nye forhindringer ud på ridebanen. Her øver du dig på opgaver, du kender – med nye tal.' },
+
   menu: { rejser: ['🗺️', 'Eventyr'], skat: ['💎', 'Dine ædelsten'], crew: ['👑', 'Dit hof'] },
   konfetti: {
     lille: ['moent', 'moent', 'moent', '✨', '⭐', '🌸', '💖'],

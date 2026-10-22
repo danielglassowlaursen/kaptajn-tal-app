@@ -77,6 +77,8 @@ export const PIRAT: Tema = {
     { navn: 'Dronningens Hævn', emoji: '⛴️', crew: 28 },
   ],
 
+  traening: { navn: 'Kanonøvelsen', emoji: '💣', intro: 'Kanonmesteren har blandet tallene om. Her øver du dig på opgaver, du allerede kan – med nye tal, så du bliver endnu skarpere.' },
+
   menu: { rejser: ['🗺️', 'Togter'], skat: ['💰', 'Din skat'], crew: ['⚓', 'Din besætning'] },
   konfetti: {
     lille: ['moent', 'moent', 'moent', '💰', '⭐', '✨', '💎'],

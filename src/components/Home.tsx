@@ -4,6 +4,8 @@ import { doneIds, togtCoins } from '../lib/progress'
 import { Moent } from './Moent'
 import { appNavn, TEMA_LISTE, useTema, type TemaId } from '../tema'
 import { KlasseVaelger } from './KlasseVaelger'
+import type { TraeningsStatus } from '../lib/traening'
+import { TRAENING_ANTAL } from '../lib/traening'
 
 interface Props {
   progress: Progress
@@ -13,12 +15,14 @@ interface Props {
   onName: (name: string) => void
   onTema: (id: TemaId) => void
   onKlasse: (k: number) => void
+  traening: TraeningsStatus
+  onTraening: () => void
   onStart: (togtId: string, startIndex: number) => void
   onOversigt: (togtId: string) => void
 }
 
 /** Forsiden: hilsen + togter. Skat og besætning har deres egne sider i topmenuen. */
-export function Home({ progress, togter, kodeKort, mineTogter, onName, onTema, onKlasse, onStart, onOversigt }: Props) {
+export function Home({ progress, togter, kodeKort, mineTogter, onName, onTema, onKlasse, traening, onTraening, onStart, onOversigt }: Props) {
   const tm = useTema()
   const name = progress.name.trim()
   return (
@@ -54,6 +58,28 @@ export function Home({ progress, togter, kodeKort, mineTogter, onName, onTema, o
       {kodeKort}
 
       {mineTogter}
+
+      <div className={`card traening-kort ${traening.laast ? 'laast' : ''}`}>
+        <div className="togt-emoji">{traening.laast ? '🔒' : tm.traening.emoji}</div>
+        <div className="togt-info">
+          <div className="togt-title">{tm.traening.navn}</div>
+          {traening.laast ? (
+            <div className="muted small">
+              {traening.pulje === 0
+                ? `Løs først et ${tm.rejse}, så åbner ${tm.traening.navn}.`
+                : `Åbner, når alle ${tm.rejser} er løst. Du mangler ${traening.mangler} opgave${traening.mangler === 1 ? '' : 'r'}.`}
+            </div>
+          ) : (
+            <div className="muted small">
+              {TRAENING_ANTAL} opgaver med nye tal · samme {tm.valuta} som på et {tm.rejse}
+              {progress.traening?.omgange ? ` · ${progress.traening.omgange} omgange indtil nu` : ''}
+            </div>
+          )}
+        </div>
+        <button className="btn btn-primary" disabled={traening.laast} onClick={onTraening}>
+          Træn 💪
+        </button>
+      </div>
 
       <h2 className="section-title">Vælg et {tm.rejse}</h2>
       <div className="togt-list">

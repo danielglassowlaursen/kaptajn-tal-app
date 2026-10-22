@@ -77,6 +77,8 @@ export const RUM: Tema = {
     { navn: 'Galakseskibet', emoji: '🌌', crew: 28 },
   ],
 
+  traening: { navn: 'Simulatoren', emoji: '🕹️', intro: 'Bip har sat simulatoren op med nye tal. Her træner du opgaver, du allerede har klaret, så du er klar til næste mission.' },
+
   menu: { rejser: ['🗺️', 'Missioner'], skat: ['✨', 'Dit stjernestøv'], crew: ['👩‍🚀', 'Din besætning'] },
   konfetti: {
     lille: ['moent', 'moent', 'moent', '✨', '⭐', '🌟', '💫'],

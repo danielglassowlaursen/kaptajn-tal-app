@@ -77,6 +77,8 @@ export const FLYT: Tema = {
     { navn: 'Drømmehuset', emoji: '🏰', crew: 28 },
   ],
 
+  traening: { navn: 'Budgetværkstedet', emoji: '🧮', intro: 'Penny har lavet nye budgetter. Her øver du dig på regnestykker, du allerede kan – med nye tal og priser.' },
+
   menu: { rejser: ['📅', 'Måneder'], skat: ['💰', 'Din økonomi'], crew: ['🏠', 'Din lejlighed'] },
   konfetti: {
     lille: ['moent', 'moent', 'moent', '✨', '⭐', '🧾', '💡'],

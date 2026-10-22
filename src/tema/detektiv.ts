@@ -77,6 +77,8 @@ export const DETEKTIV: Tema = {
     { navn: 'Verdens bedste bureau', emoji: '🌍', crew: 28 },
   ],
 
+  traening: { navn: 'Politiskolen', emoji: '🚔', intro: 'På politiskolen øver du dig på sager, du allerede har opklaret – med nye tal og nye spor.' },
+
   menu: { rejser: ['📁', 'Sager'], skat: ['🔍', 'Dine beviser'], crew: ['🕵️', 'Dit team'] },
   konfetti: {
     lille: ['moent', 'moent', 'moent', '🔍', '⭐', '📄', '🗝️'],

@@ -77,6 +77,8 @@ export const SPORT: Tema = {
     { navn: 'Hall of Fame', emoji: '🌟', crew: 28 },
   ],
 
+  traening: { navn: 'Træningslejren', emoji: '🏋️', intro: 'Coach Kim har lavet et nyt træningsprogram: opgaver, du kender, med nye tal. Træning gør mester.' },
+
   menu: { rejser: ['📅', 'Kampe'], skat: ['🏅', 'Dine point'], crew: ['👟', 'Dit hold'] },
   konfetti: {
     lille: ['moent', 'moent', 'moent', '⭐', '🎉', '⚽', '✨'],

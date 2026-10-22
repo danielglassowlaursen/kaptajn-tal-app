@@ -71,6 +71,9 @@ export interface Tema {
   nytISamling: (s: Samling) => string
   samling: Samling[]
 
+  // Træning (varianter af løste opgaver)
+  traening: { navn: string; emoji: string; intro: string }
+
   // Menu
   menu: { rejser: [string, string]; skat: [string, string]; crew: [string, string] }
 

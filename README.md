@@ -34,6 +34,10 @@ regneark fra skolen, så svarene nemt kan skrives over på papiret bagefter.
   tabel-træning. Forkerte svar lader Sorte Sven snuppe noget af skatten.
 - **Dagligt mål** – 10 minutter om dagen giver et nyt besætningsmedlem. Streak og flåde vokser.
 - **Oversigt** – facit og hvor meget hjælp der blev brugt, pr. ark og opgavenummer.
+- **Træning** – når alle togter er løst, åbner temaets træningssted (fx Kanonøvelsen eller
+  Budgetværkstedet) med 20 varianter af løste opgaver: samme historie, nye tal. Opgaver, barnet
+  havde svært ved, kommer oftere. Facit regnes altid af appens egen kontrol, og en variant, appen
+  ikke kan bekræfte, bruges ikke. Samme guld og tyveri som på et togt.
 - **Familiekode** – fremgangen synker mellem iPad, telefon og computer, med historik og
   sikkerhedskopi som fil.
 - **Gendannelseskode** – når en familie opretter en kode, får de også en gendannelseskode og

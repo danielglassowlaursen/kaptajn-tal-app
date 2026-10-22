@@ -211,4 +211,6 @@ export interface Progress {
   tema?: 'pirat' | 'prinsesse' | 'rum' | 'detektiv' | 'sport' | 'flyt'
   /** Klassetrin (1–10). Styrer tonen i AI'ens historier. */
   klasse?: number
+  /** Træning: tællere i stedet for opgave-id'er, så fremgangen ikke vokser for hver omgang. */
+  traening?: { omgange: number; opgaver: number; rigtige: number; sidst?: string }
 }

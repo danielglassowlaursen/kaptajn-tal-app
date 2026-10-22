@@ -25,6 +25,9 @@ interface Props {
   onOversigt: () => void
   /** Barnet melder forkert facit. Returnerer hvor meget der gives tilbage. */
   onRapport: (opgaveId: string) => number
+  /** Træningsomgang: ingen ark, ingen fejlmelding, og knap til en omgang mere. */
+  traening?: boolean
+  onIgen?: () => void
   onExit: () => void
 }
 
@@ -49,7 +52,7 @@ export function useTidsTaeller(aktiv: boolean, onTick: (sek: number) => void) {
   }, [aktiv])
 }
 
-export function TogtView({ togt, progress, startIndex, skipIntro, iDag, onResultat, onTick, onBegrav, onOversigt, onRapport, onExit }: Props) {
+export function TogtView({ togt, progress, startIndex, skipIntro, iDag, onResultat, onTick, onBegrav, onOversigt, onRapport, traening, onIgen, onExit }: Props) {
   const t = useTema()
   const [phase, setPhase] = useState<Phase>(skipIntro ? 'opgave' : 'intro')
   const [index, setIndex] = useState(Math.min(startIndex, togt.opgaver.length - 1))
@@ -192,10 +195,10 @@ export function TogtView({ togt, progress, startIndex, skipIntro, iDag, onResult
         <div className="card center">
           <div className="big-emoji">{t.menu.skat[0]}</div>
           <h1 className="title">
-            {t.rejsen[0].toUpperCase() + t.rejsen.slice(1)} er slut!
+            {traening ? `${togt.title} er slut!` : `${t.rejsen[0].toUpperCase() + t.rejsen.slice(1)} er slut!`}
           </h1>
           <p className="intro">
-            Du tjente <b>{sessionGuld}</b> {t.valuta} på dette {t.rejse}.
+            Du tjente <b>{sessionGuld}</b> {t.valuta}{traening ? ' i denne omgang' : ` på dette ${t.rejse}`}.
           </p>
           <p className="muted">
             I {t.pung} nu: <Moent /> {progress.pung} · {t.gemt}: <Moent /> {progress.skat}
@@ -205,14 +208,22 @@ export function TogtView({ togt, progress, startIndex, skipIntro, iDag, onResult
               {t.valuta[0].toUpperCase() + t.valuta.slice(1)} i {t.pung} er ikke sikre, før de er gemt. {t.gemTitel}!
             </p>
           )}
-          <p className="muted small">Skal svarene over på arket? Oversigten viser facit og hvordan du fandt dem.</p>
+          {!traening && <p className="muted small">Skal svarene over på arket? Oversigten viser facit og hvordan du fandt dem.</p>}
           <div className="btn-row">
             <button className="btn btn-ghost" onClick={onExit}>
               Tilbage til forsiden 🗺️
             </button>
-            <button className="btn btn-ghost" onClick={onOversigt}>
-              Se oversigten 📋
-            </button>
+            {traening ? (
+              onIgen && (
+                <button className="btn btn-ghost" onClick={onIgen}>
+                  En omgang mere 🔁
+                </button>
+              )
+            ) : (
+              <button className="btn btn-ghost" onClick={onOversigt}>
+                Se oversigten 📋
+              </button>
+            )}
             {progress.pung > 0 && (
               <button className="btn btn-primary btn-big" onClick={onBegrav}>
                 {t.gemKnap}
@@ -316,7 +327,7 @@ export function TogtView({ togt, progress, startIndex, skipIntro, iDag, onResult
 
         {message && <div className={`feedback feedback-${message.kind}`}>{message.text}</div>}
 
-        {status === 'revealed' && !isReplay && !rapporteret.has(opgave.id) && (
+        {status === 'revealed' && !isReplay && !traening && !rapporteret.has(opgave.id) && (
           <button
             className="btn btn-ghost btn-small rapport-knap"
             onClick={() => {

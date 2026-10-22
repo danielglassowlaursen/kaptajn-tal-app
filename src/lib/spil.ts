@@ -46,6 +46,30 @@ export function bogfoer(p: Progress, togtId: string, opgaveId: string, resultat:
   return { p: next, guld, tyveri }
 }
 
+/** Bogfør et svar i træning: samme guld og tyveri som på et togt, men kun tællere gemmes. */
+export function bogfoerTraening(p: Progress, resultat: Resultat, tema: Tema): { p: Progress; guld: number; tyveri: Tyveri | null } {
+  const guld = resultat === 'foerste' ? CONFIG.guldFoersteForsoeg : resultat === 'andet' ? CONFIG.guldAndetForsoeg : 0
+  const tr = p.traening ?? { omgange: 0, opgaver: 0, rigtige: 0 }
+  let next: Progress = {
+    ...p,
+    pung: p.pung + guld,
+    traening: { ...tr, opgaver: tr.opgaver + 1, rigtige: tr.rigtige + (guld > 0 ? 1 : 0), sidst: dagKey() },
+  }
+  let tyveri: Tyveri | null = null
+  if (resultat === 'forkert') {
+    const r = stjael(next, CONFIG.tyveri, tema)
+    next = r.p
+    tyveri = r.tyveri
+  }
+  return { p: next, guld, tyveri }
+}
+
+/** Tæl en påbegyndt træningsomgang. */
+export function startTraening(p: Progress): Progress {
+  const tr = p.traening ?? { omgange: 0, opgaver: 0, rigtige: 0 }
+  return { ...p, traening: { ...tr, omgange: tr.omgange + 1 } }
+}
+
 /** Barnet melder, at facit ser forkert ud: det, tyven tog, gives tilbage i pungen, og opgaven markeres. */
 export function rapporterFacit(p: Progress, togtId: string, opgaveId: string): { p: Progress; tilbage: number } {
   const t = p.togter[togtId]

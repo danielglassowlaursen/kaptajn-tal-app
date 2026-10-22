@@ -10,7 +10,8 @@ import { Scan } from './components/Scan'
 import { Velkommen } from './components/Velkommen'
 import { loadAi, saveAi, type AiIndstillinger } from './lib/ai'
 import { erTom, loadProgress, saveProgress, TOM_PROGRESS } from './lib/progress'
-import { aabnOpgaver, begrav, bogfoer, evaluerDage, rapporterFacit, tilfoejTid, type Resultat } from './lib/spil'
+import { aabnOpgaver, begrav, bogfoer, bogfoerTraening, evaluerDage, rapporterFacit, startTraening, tilfoejTid, type Resultat } from './lib/spil'
+import { lavTraening, traeningsStatus, TRAENING_ID } from './lib/traening'
 import { Gennemse } from './components/Gennemse'
 import { answerText } from './lib/check'
 import { dagKey } from './lib/dato'
@@ -50,6 +51,7 @@ type Screen =
   | { kind: 'begrav' }
   | { kind: 'scan' }
   | { kind: 'ret'; togtId: string }
+  | { kind: 'traening' }
 
 /** Udvikler-genvej: ?togt=togt2&i=13 åbner opgave 13 i togt 2 direkte. */
 function screenFromUrl(): Screen {
@@ -78,6 +80,8 @@ export default function App() {
   const [genindlaeser, setGenindlaeser] = useState(false)
   const [lyd, setLyd] = useState(() => lydTil())
   const [lager, setLager] = useState<TogtLager>(() => loadTogter())
+  // Træningsomgangen bygges én gang ved start, så den ikke ændrer sig, mens barnet svarer.
+  const [traeningTogt, setTraeningTogt] = useState<Togt | null>(null)
   const [ai, setAi] = useState<AiIndstillinger>(() => loadAi())
   // Velkomstguiden vises første gang på en tom enhed uden familiekode.
   const [velkommen, setVelkommen] = useState(() => {
@@ -263,6 +267,11 @@ export default function App() {
   }
 
   function resultat(togtId: string, opgaveId: string, r: Resultat) {
+    if (togtId === TRAENING_ID) {
+      const b = bogfoerTraening(ref.current, r, temaRef.current)
+      update(b.p)
+      return { guld: b.guld, tyveri: b.tyveri }
+    }
     const b = bogfoer(ref.current, togtId, opgaveId, r, temaRef.current)
     update(b.p)
     return { guld: b.guld, tyveri: b.tyveri }
@@ -450,7 +459,7 @@ export default function App() {
 
   // ------------------------------------------------------------ render
   const active: MenuKey | null =
-    screen.kind === 'home' || screen.kind === 'togt' || screen.kind === 'scan' || screen.kind === 'ret'
+    screen.kind === 'home' || screen.kind === 'togt' || screen.kind === 'scan' || screen.kind === 'ret' || screen.kind === 'traening'
       ? 'home'
       : screen.kind === 'skat' || screen.kind === 'begrav'
         ? 'skat'
@@ -493,6 +502,19 @@ export default function App() {
     if (valg === 'demo') setScreen({ kind: 'togt', togtId: 'demo', startIndex: 0 })
     else if (valg === 'scan') setScreen({ kind: 'scan' })
     else setScreen({ kind: 'home' })
+  }
+
+  const traenStatus = traeningsStatus(alleTogter, progress)
+
+  function startTraeningsomgang() {
+    const t = lavTraening(alleTogter, ref.current, tema, Date.now() % 2147483647)
+    if (t.opgaver.length === 0) {
+      addToasts(['Der er ikke nok opgaver at træne på endnu.'])
+      return
+    }
+    update(startTraening(ref.current))
+    setTraeningTogt(t)
+    setScreen({ kind: 'traening' })
   }
 
   let content
@@ -540,6 +562,24 @@ export default function App() {
         onKasser={() => setScreen({ kind: 'home' })}
       />
     )
+  } else if (screen.kind === 'traening' && traeningTogt) {
+    content = (
+      <TogtView
+        key={traeningTogt.opgaver[0]?.id ?? 'traening'}
+        togt={traeningTogt}
+        progress={progress}
+        startIndex={0}
+        iDag={iDag}
+        traening
+        onResultat={(opgaveId, r) => resultat(TRAENING_ID, opgaveId, r)}
+        onTick={tick}
+        onBegrav={() => setScreen({ kind: 'begrav' })}
+        onOversigt={() => setScreen({ kind: 'home' })}
+        onRapport={() => 0}
+        onIgen={startTraeningsomgang}
+        onExit={() => setScreen({ kind: 'home' })}
+      />
+    )
   } else if (screen.kind === 'scan') {
     content = <Scan kode={kode} tema={tema.id} klasse={progress.klasse ?? 0} ai={ai} onGemAi={gemAi} onGem={(t, foto) => void gemScannet(t, foto)} onExit={() => setScreen({ kind: 'home' })} />
   } else if (screen.kind === 'oversigt') {
@@ -560,6 +600,8 @@ export default function App() {
         onName={(name) => update({ ...progress, name })}
         onTema={(id: TemaId) => update({ ...progress, tema: id })}
         onKlasse={(k) => update({ ...progress, klasse: k })}
+        traening={traenStatus}
+        onTraening={startTraeningsomgang}
         onStart={(togtId, startIndex) => setScreen({ kind: 'togt', togtId, startIndex })}
         onOversigt={(togtId) => setScreen({ kind: 'oversigt', togtId })}
       />

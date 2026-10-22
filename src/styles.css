@@ -1822,3 +1822,21 @@ input {
   flex-direction: column;
   gap: 6px;
 }
+.traening-kort {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  border-color: var(--gold-2);
+}
+.traening-kort.laast {
+  opacity: 0.8;
+  border-color: var(--parchment-3);
+}
+@media (max-width: 480px) {
+  .traening-kort {
+    flex-wrap: wrap;
+  }
+  .traening-kort .btn {
+    width: 100%;
+  }
+}
