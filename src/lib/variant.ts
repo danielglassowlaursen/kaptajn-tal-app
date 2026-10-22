@@ -9,8 +9,8 @@
 // ---------------------------------------------------------------------------
 import type { Opgave, Visual } from '../types'
 import { kontrol } from './kontrol'
-import { formatNumber } from './check'
-import { laesUdtryk } from './matematik'
+import { answerText, formatNumber } from './check'
+import { laesUdtryk, regnUd } from './matematik'
 
 export type Rnd = () => number
 
@@ -27,6 +27,7 @@ export function lavRnd(seed: number): Rnd {
 }
 
 const heltal = (rnd: Rnd, min: number, max: number) => min + Math.floor(rnd() * (max - min + 1))
+const decimalerI = (n: number) => (Number.isInteger(n) ? 0 : (String(n).split('.')[1] ?? '').length)
 
 // Tal i tekst: "1.000" (tusindtalsseparator) undgås ved kun at tage cifre med valgfrit decimalkomma.
 // Klokkeslæt (9:15, 11.00) og eksponenter springes over.
@@ -70,26 +71,14 @@ function erstat(tekst: string | undefined, kort: Map<string, string>): string | 
   return tekst.replace(TAL_RE, (m) => kort.get(m) ?? m)
 }
 
-/** Tekst, hvor alle tal kan oversættes – ellers null (fx hints med mellemregninger). */
-function erstatHelt(tekst: string, kort: Map<string, string>, faste: Set<string>): string | null {
-  let ok = true
-  const ud = tekst.replace(TAL_RE, (m) => {
-    if (kort.has(m)) return kort.get(m)!
-    if (faste.has(m) || m === '0' || m === '1' || m === '2' || m === '10') return m
-    ok = false
-    return m
-  })
-  return ok ? ud : null
-}
-
 const GENERELLE_HINTS: Record<Opgave['type'], [string, string]> = {
   tal: ['Læs historien igen: Kommer der flere til, bliver der færre, eller deles noget ligeligt?', 'Skriv regnestykket op, og regn det ud et skridt ad gangen. Passer svaret med historien?'],
-  talraekke: ['Kig på to tal, der står ved siden af hinanden. Hvor stort er springet?', 'Brug samme spring fra et tal, du kender, til det tomme felt.'],
+  talraekke: ['Kig på to tal, der står ved siden af hinanden. Hvad sker der fra det ene til det næste?', 'Find mønsteret: Lægger man det samme til hver gang, eller ganger man med det samme? Brug det på de tomme felter.'],
   vaelg: ['Læs reglen i spørgsmålet igen, og tjek tallene ét ad gangen.', 'Gå tallene igennem fra venstre mod højre, og vælg kun dem, der passer til reglen.'],
   sammenlign: ['Regn hver side ud for sig selv først.', 'Når du har begge tal, så åbner gabet i > og < sig altid mod det største tal.'],
   sorter: ['Find det mindste tal først.', 'Sammenlign først cifrene længst til venstre – eller tallet før kommaet.'],
   valg: ['Læs spørgsmålet igen, og kig på tegningen.', 'Udelad de svar, der ikke kan passe, og vælg blandt resten.'],
-  felter: ['En brøk som 1/4 betyder, at det hele deles i lige store bunker.', 'Del antallet af felter med tallet under brøkstregen, og gang med tallet over.'],
+  felter: ['En brøk betyder, at det hele deles i lige store dele.', 'Del antallet af felter med tallet under brøkstregen, og gang med tallet over.'],
   ciffer: ['Start fra højre: enere, tiere, hundreder, tusinder.', 'Tæl pladserne fra højre i hvert tal, og find den rigtige plads.'],
   koordinat: ['Gå først til højre langs bunden, og tæl. Gå så opad, og tæl.', 'Start i (0;0). x er antal felter til højre, y er antal felter op.'],
   flere: ['En ligning kan have mere end én løsning.', 'Prøv at skrive ligningen som et produkt, eller prøv dig frem med små tal.'],
@@ -97,12 +86,47 @@ const GENERELLE_HINTS: Record<Opgave['type'], [string, string]> = {
   udtryk: ['Gang parenteser ud først.', 'Saml leddene med x for sig og tallene for sig.'],
 }
 
-function nyeHints(o: Opgave, kort: Map<string, string>, faste: Set<string>): string[] {
-  const gen = GENERELLE_HINTS[o.type]
+// Hints, der påstår noget om de oprindelige tal ("en halv", "næsten 30", "husk nullet",
+// "alle tallene starter med 1", "er lille") passer ikke til nye tal.
+const PAASTANDE = /\ben halv\b|\bhalve\b|næsten|tæt på|starter med|alle tallene|\bnul(let|ler)?\b|\brunde?\b|\ber (lille|stor|større|mindre)\b/i
+
+/** Må et hint genbruges i varianten? Kun hvis alle dets tal er byttet med eller er faste givne tal. */
+function kanGenbruges(h: string, o: Opgave, kort: Map<string, string>, givne: Set<string>): boolean {
+  if (PAASTANDE.test(h)) return false
+  for (const [tal, ord] of Object.entries(TALORD)) if (kort.has(tal) && kort.get(tal) !== tal && new RegExp(`\\b${ord}\\b`, 'i').test(h)) return false
+  const tal = [...h.matchAll(TAL_RE)].map((m) => m[1])
+  if (o.type === 'vaelg' || o.type === 'ciffer' || o.type === 'koordinat') return tal.every((t) => t.length === 1) // reglerne afhænger ikke af tallene
+  return tal.every((t) => kort.has(t) || givne.has(t))
+}
+
+function erstatHint(h: string, kort: Map<string, string>): string {
+  return h.replace(TAL_RE, (m) => kort.get(m) ?? m)
+}
+
+/** Generelle hints ud fra regneoperationen i det nye regnestykke. */
+function generelleHints(v: Opgave): [string, string] {
+  const r = (v.udregning ?? v.regnestykke ?? '').replace(/\s+/g, '')
+  if (v.type === 'tal') {
+    if (/sqrt|√/.test(r)) return ['Det er en retvinklet trekant. Hvilken sætning bruger man til den længste side?', 'Brug Pythagoras: læg kvadraterne på de to korte sider sammen, og tag kvadratroden.']
+    if (r.includes('=') && /x/i.test(r)) return ['Find det tal, x står for.', 'Gør det samme på begge sider af lighedstegnet, til x står alene.']
+    if (/=\?|=_/.test(r)) return ['Hvor mange af den lille enhed går der på én af den store?', 'Gang eller divider med det tal, der skifter mellem de to enheder.']
+    const ops = (r.replace(/^-/, '').match(/[+\-−·*:/×÷]/g) ?? []).length
+    if (ops > 1) return ['Tag ét skridt ad gangen.', 'Regn gange og division først, derefter plus og minus – fra venstre mod højre.']
+    if (/\d,\d/.test(r) && /[+]/.test(r)) return ['Der kommer noget til – læg sammen.', 'Læg de hele tal sammen for sig og tallene efter kommaet for sig. Bliver det over 10 tiendedele, er det en hel mere.']
+    if (/\d,\d/.test(r) && /[-−]/.test(r)) return ['Noget forsvinder – træk fra.', 'Træk de hele tal fra hinanden og tallene efter kommaet fra hinanden. Mangler du tiendedele, så lån en hel.']
+    if (/[+]/.test(r)) return ['Der kommer noget til – læg sammen.', 'Del det ene tal op i tiere og enere, og læg dem til hver for sig.']
+    if (/[-−]/.test(r)) return ['Noget forsvinder – træk fra.', 'Træk først tierne fra og derefter enerne.']
+    if (/[·*×]/.test(r)) return ['Det er lige store bunker – det er gange.', 'Del det største tal op i tiere og enere, gang hver del, og læg resultaterne sammen.']
+    if (/[:/÷]/.test(r)) return ['Noget deles ligeligt – det er division.', 'Tænk på gangetabellen: Hvilket tal gange det ene giver det andet?']
+  }
+  return GENERELLE_HINTS[v.type]
+}
+
+function nyeHints(o: Opgave, v: Opgave, kort: Map<string, string>, givne: Set<string>): string[] {
+  const gen = generelleHints(v)
   return [0, 1].map((i) => {
     const h = o.hints?.[i]
-    if (!h) return gen[i]
-    return erstatHelt(h, kort, faste) ?? gen[i]
+    return h && kanGenbruges(h, o, kort, givne) ? erstatHint(h, kort) : gen[i]
   })
 }
 
@@ -158,11 +182,13 @@ export function lavVariant(o: Opgave, rnd: Rnd, nyId: string): Opgave | null {
     // Et tal, der også står som ord i historien ("tre master"), bliver stående.
     const tekst = `${o.story} ${o.question}`.toLowerCase()
     const regnTal = synligeTal(o.regnestykke, o.udregning)
+    const historieTal = synligeTal(o.story, o.question)
     const harRegnestykke = !!(o.regnestykke || o.udregning) && o.type !== 'sammenlign'
-    const synlige = synligeTal(o.story, o.question, ...(o.type === 'sammenlign' ? [o.left, o.right] : [])).filter(
-      (x) => (!harRegnestykke || regnTal.includes(x)) && !(TALORD[x] && new RegExp(`\\b${TALORD[x]}\\b`).test(tekst)),
+    // Har historien ingen tal, er regnestykket selve opgaven (fx en ligning), og dets tal må byttes
+    const kilde = historieTal.length === 0 && harRegnestykke ? synligeTal(o.regnestykke) : synligeTal(o.story, o.question, ...(o.type === 'sammenlign' ? [o.left, o.right] : []))
+    const synlige = kilde.filter(
+      (x) => (!harRegnestykke || historieTal.length === 0 || regnTal.includes(x)) && !(TALORD[x] && new RegExp(`\\b${TALORD[x]}\\b`).test(tekst)),
     )
-    const faste = new Set(regnTal.filter((x) => !synlige.includes(x)))
     const kort = new Map<string, string>()
     // Ægte brøker (tæller < nævner) forbliver ægte: tælleren vælges under nævneren
     const regnTekst = `${o.regnestykke ?? ''} ${o.udregning ?? ''}`.replace(/\s+/g, '')
@@ -184,6 +210,22 @@ export function lavVariant(o: Opgave, rnd: Rnd, nyId: string): Opgave | null {
       nytTotal = Number(fm[2]) * heltal(rnd, 2, 4)
       if (nytTotal > 24) nytTotal = Number(fm[2]) * 2
       kort.set(String(o.total), String(nytTotal))
+    }
+    if (o.type === 'flere' && o.answers.length === 2 && o.answers.every(Number.isInteger)) {
+      const m = (o.regnestykke ?? '').replace(/\s+/g, '').match(/^x\^2([+-])(\d*)x([+-])(\d+)=0$/)
+      if (m) {
+        const pos = o.answers.every((a) => a > 0)
+        let r1 = heltal(rnd, pos ? 1 : -9, 9)
+        let r2 = heltal(rnd, pos ? 1 : -9, 9)
+        if (r1 === r2 || r1 === 0 || r2 === 0) continue
+        if (r1 > r2) [r1, r2] = [r2, r1]
+        const sum = r1 + r2
+        const prod = r1 * r2
+        // Samme fortegnsmønster som originalen, så regnestykkets "−" og "+" stadig passer
+        if ((m[1] === '-') !== sum > 0 || (m[3] === '+') !== prod > 0) continue
+        kort.set(m[2] || '1', String(Math.abs(sum)))
+        kort.set(m[4], String(Math.abs(prod)))
+      }
     }
     for (const t of synlige) if (!kort.has(t)) kort.set(t, nytTal(t, rnd))
 
@@ -275,13 +317,24 @@ export function lavVariant(o: Opgave, rnd: Rnd, nyId: string): Opgave | null {
     // Sanity: rimelige svar (positive heltal forbliver positive heltal; flere: hele løsninger)
     if (v.type === 'tal' && o.type === 'tal') {
       if (Number.isInteger(o.answer) && v.decimaler === undefined && !Number.isInteger(v.answer)) continue
+      if (o.answer > 0 && v.answer <= 0) continue
       if (o.answer >= 0 && v.answer < 0) continue
+      // Ikke flere decimaler end originalen (fx 1,5 → aldrig 0,875)
+      if (v.decimaler === undefined && decimalerI(v.answer) > decimalerI(o.answer)) continue
       if (!Number.isFinite(v.answer)) continue
     }
     if (v.type === 'flere' && o.type === 'flere') {
       if (v.answers.length !== o.answers.length || !v.answers.every(Number.isInteger)) continue
     }
     if (v.type === 'felter' && (v.answer <= 0 || v.answer >= v.total)) continue
+    if (v.type === 'sammenlign' && o.type === 'sammenlign') {
+      const [a, b, oa, ob] = [regnUd(v.left), regnUd(v.right), regnUd(o.left), regnUd(o.right)]
+      if (a === null || b === null) continue
+      if ((oa ?? 0) >= 0 && a < 0) continue
+      if ((ob ?? 0) >= 0 && b < 0) continue
+      if (oa !== null && Number.isInteger(oa) && !Number.isInteger(a)) continue
+      if (ob !== null && Number.isInteger(ob) && !Number.isInteger(b)) continue
+    }
     if (v.type === 'vaelg' && (v.correct.length === 0 || v.correct.length === v.items.length)) continue
     if (v.type === 'broek' && (v.answer[1] > 100 || v.answer[0] <= 0)) continue
     if (v.type === 'broek' && o.type === 'broek' && o.answer[0] < o.answer[1] && v.answer[0] >= v.answer[1]) continue
@@ -293,10 +346,15 @@ export function lavVariant(o: Opgave, rnd: Rnd, nyId: string): Opgave | null {
 
     // Alternative stavemåder (fx "19.00") følger det nye facit
     if (o.type === 'tal' && v.type === 'tal' && o.accept?.length) v.accept = o.accept.map((a) => a.replace(String(o.answer), String(v.answer)))
-    v.hints = nyeHints(o, kort, faste)
+    const givne = new Set(synligeTal(o.story, o.question, o.regnestykke, o.udregning).filter((t) => !kort.has(t)))
+    v.hints = nyeHints(o, v, kort, givne)
     // Hint 2 må ikke afsløre det nye facit
     const facitTekst = v.type === 'tal' ? [formatNumber(v.answer), String(v.answer)] : []
-    if (facitTekst.some((f) => new RegExp(`(^|[^0-9,])${f.replace('.', '\\.')}(?![0-9])`).test(v.hints![1]))) v.hints[1] = GENERELLE_HINTS[v.type][1]
+    if (facitTekst.some((f) => new RegExp(`(^|[^0-9,])${f.replace('.', '\\.')}(?![0-9])`).test(v.hints![1]))) v.hints[1] = generelleHints(v)[1]
+    // En variant, der ikke er ændret, er ingen variant
+    if (answerText(v) === answerText(o) && v.story === o.story && v.question === o.question && v.regnestykke === o.regnestykke && JSON.stringify(v.visual) === JSON.stringify(o.visual)) {
+      if (o.type !== 'ciffer' && o.type !== 'vaelg' && o.type !== 'sorter' && o.type !== 'talraekke' && o.type !== 'koordinat' && o.type !== 'felter') return null
+    }
     return v
   }
   return null

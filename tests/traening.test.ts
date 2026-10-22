@@ -3,6 +3,7 @@ import { demoTogter } from '../src/data/togter'
 import { TEMA_LISTE } from '../src/tema'
 import { PIRAT } from '../src/tema/pirat'
 import { kontrol } from '../src/lib/kontrol'
+import { regnUd } from '../src/lib/matematik'
 import { lavRnd, lavVariant } from '../src/lib/variant'
 import { lavTraening, traeningsStatus, TRAENING_ANTAL } from '../src/lib/traening'
 import { bogfoer, bogfoerTraening } from '../src/lib/spil'
@@ -111,6 +112,71 @@ function alleLoest(): Progress {
   for (const t of demoTogter('pirat')) for (const o of t.opgaver) p = bogfoer(p, t.id, o.id, 'foerste', PIRAT).p
   return p
 }
+
+describe('varianter giver mening for et barn', () => {
+  const mange = (o: Opgave, n = 150) => {
+    const rnd = lavRnd(17)
+    return Array.from({ length: n }, () => lavVariant(o, rnd, 'v')).filter((v): v is Opgave => !!v)
+  }
+
+  it('hints med påstande om de gamle tal genbruges ikke', () => {
+    const o: Opgave = { id: 'p', type: 'tal', story: 'Skibet har 160 tønder. Besætningen drikker 29 tønder.', question: 'Hvor mange er tilbage?', regnestykke: '160 − 29', answer: 131, hints: ['29 er næsten 30.', 'Træk 30 fra 160, og læg 1 til igen.'] }
+    for (const v of mange(o)) {
+      expect(v.hints!.join(' ')).not.toMatch(/næsten|\b30\b|\b160\b/)
+    }
+  })
+
+  it('hints med egne tal genbruges kun, hvis alle tallene er byttet', () => {
+    const o: Opgave = { id: 'q', type: 'tal', story: 'Fem pirater får hver 12 mønter.', question: 'Hvor mange i alt?', regnestykke: '5 · 12', answer: 60, hints: ['Fem bunker med 12 i hver.', 'Del 12 op i 10 og 2.'] }
+    for (const v of mange(o)) {
+      expect(v.hints![1]).not.toMatch(/10 og 2/)
+      if (v.type === 'tal') expect(v.hints![0]).toContain(String(v.regnestykke!.split('·')[1].trim()))
+    }
+  })
+
+  it('facit bliver hverken 0, negativt eller får flere decimaler', () => {
+    const opg: Opgave[] = [
+      { id: 'a', type: 'tal', story: 'Der var 20 æbler. Nogle blev spist, nu er der 7.', question: 'Hvor mange blev spist?', regnestykke: '20 − x = 7', answer: 13 },
+      { id: 'b', type: 'tal', story: 'Sejl 5,5 sømil og så 1,5 sømil.', question: 'Hvor langt?', regnestykke: '5,5 + 1,5', answer: 7 },
+      { id: 'c', type: 'tal', story: '40 mønter deles på 5 pirater.', question: 'Hvor mange hver?', regnestykke: '40 : 5', answer: 8 },
+    ]
+    for (const o of opg) for (const v of mange(o)) {
+      if (v.type !== 'tal') continue
+      expect(v.answer, `${v.regnestykke}`).toBeGreaterThan(0)
+      if (o.type === 'tal' && Number.isInteger(o.answer)) expect(Number.isInteger(v.answer), `${v.regnestykke}`).toBe(true)
+    }
+  })
+
+  it('sammenlign-sider forbliver ikke-negative heltal', () => {
+    const o = alleOpgaver.find((x) => x.type === 'sammenlign')!
+    for (const v of mange(o)) {
+      if (v.type !== 'sammenlign') continue
+      for (const side of [v.left, v.right]) {
+        const tal = regnUd(side) ?? NaN
+        if (!Number.isNaN(tal)) {
+          expect(tal, side).toBeGreaterThanOrEqual(0)
+          expect(Number.isInteger(tal), side).toBe(true)
+        }
+      }
+    }
+  })
+
+  it('andengradsligninger får nye heltalsrødder', () => {
+    const o: Opgave = { id: 'k', type: 'flere', story: 'Koden er løsningerne.', question: 'Find x.', regnestykke: 'x^2 - 5x + 6 = 0', answers: [2, 3] }
+    const vs = mange(o, 60)
+    expect(vs.some((v) => v.regnestykke !== o.regnestykke)).toBe(true)
+    for (const v of vs) {
+      if (v.type !== 'flere') continue
+      expect(v.answers.every(Number.isInteger)).toBe(true)
+      expect(v.answers.length).toBe(2)
+    }
+  })
+
+  it('en uændret opgave er ikke en variant', () => {
+    const o: Opgave = { id: 'u', type: 'tal', story: 'Der er 1 kilometer til øen.', question: 'Hvor mange meter?', regnestykke: '1 km = ? m', answer: 1000 }
+    for (const v of mange(o, 30)) expect(v.story).not.toBe(o.story)
+  })
+})
 
 describe('træningsomgang', () => {
   it('er låst, indtil alle togter er løst', () => {

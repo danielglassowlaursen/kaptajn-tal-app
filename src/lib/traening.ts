@@ -56,8 +56,9 @@ export function lavTraening(togter: Togt[], p: Progress, tema: Tema, seed: numbe
   const opgaver: Opgave[] = []
   const brugt = new Map<string, number>()
   // Samme opgave højst to gange pr. omgang – medmindre puljen er lille, så omgangen stadig får fuld længde
-  const maks = Math.max(2, Math.ceil(antal / Math.max(1, pulje.length)))
-  for (let forsoeg = 0; opgaver.length < antal && forsoeg < antal * 8 && pulje.length; forsoeg++) {
+  for (let forsoeg = 0; opgaver.length < antal && forsoeg < antal * 12 && pulje.length; forsoeg++) {
+    // Loftet beregnes løbende, fordi opgaver, der ikke kan varieres, fjernes fra puljen undervejs
+    const maks = Math.max(2, Math.ceil(antal / pulje.length))
     const valg = traek(
       rnd,
       pulje.map((i) => ({ ...i, w: (brugt.get(`${i.x.t.id}/${i.x.o.id}`) ?? 0) >= maks ? 0 : i.w })),

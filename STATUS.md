@@ -1,9 +1,9 @@
 # STATUS — Kaptajn Tal (offentlig udgave)
 
-_Updated: 2026-10-16 · laptop_
+_Updated: 2026-10-22 · laptop_
 
 ## Now
-Træning er bygget og deployet: temaets træningssted (Kanonøvelsen, Ridebanen, Simulatoren, Politiskolen, Træningslejren, Budgetværkstedet) med 20 varianter af løste opgaver. Åbent: rigtig scanning med Daniels nøgle og R2.
+Træning er bygget og deployet: temaets træningssted (Kanonøvelsen, Ridebanen, Simulatoren, Politiskolen, Træningslejren, Budgetværkstedet) med 20 varianter af løste opgaver. Varianterne er gennemlæst og strammet (hints, facit, plausibilitet). Åbent: rigtig scanning med Daniels nøgle og R2.
 
 ## State
 - ✅ Live: https://kaptajn-tal-app.dl-a66.workers.dev (Daniels Cloudflare-konto, `wrangler.local.jsonc` – ignoreret af git). Repo: github.com/danielglassowlaursen/kaptajn-tal-app (public, PolyForm Noncommercial).
@@ -11,9 +11,9 @@ Træning er bygget og deployet: temaets træningssted (Kanonøvelsen, Ridebanen,
 - ✅ Scan med egen nøgle (Anthropic standard Sonnet 5.5, OpenAI, OpenRouter) → gennemse/ret → gem. Fladt skema, kun én union-type.
 - ✅ Korrekte facit: `src/lib/kontrol.ts` regner facit uafhængigt (uenig blokerer gem). Isaks 80 opgaver: 74 bekræftet, 0 uenige, 6 figuraflæsning. Barnet kan melde forkert facit; voksen retter via "Ret".
 - ✅ 6 temaer (pirat, prinsesse, rum, detektiv, sport, flyt hjemmefra/økonomi), klassetrin 1–10, udskolingstyper (flere løsninger, brøk, udtryk, afrunding, grafer).
-- ✅ Træning: `src/lib/variant.ts` (bytter kun tal, der står i både historie og regnestykke; tal som ord, klokkeslæt og skjulte tal som "halvdelen" bliver stående; facit altid fra `kontrol.ts`, ellers kasseres varianten) + `src/lib/traening.ts` (låst til alle togter er løst, 20 opgaver, vægt på svære). `Progress.traening` er tællere, ikke opgave-id'er. På Isaks 80 opgaver: ~14.800 varianter, 0 uenige; 6 opgaver (figuraflæsning) får ingen variant.
+- ✅ Træning: `src/lib/variant.ts` (bytter kun tal, der står i både historie og regnestykke; tal som ord, klokkeslæt og skjulte tal som "halvdelen" bliver stående; facit altid fra `kontrol.ts`, ellers kasseres varianten) + `src/lib/traening.ts` (låst til alle togter er løst, 20 opgaver, vægt på svære). `Progress.traening` er tællere, ikke opgave-id'er. Hints genbruges kun, hvis alle deres tal er byttet og de ikke påstår noget om de gamle tal ("næsten 30", "en halv") – ellers generelle hints efter regneart. Facit forbliver positive, ikke flere decimaler, sammenlign-sider ikke-negative, andengradsligninger bygges fra nye heltalsrødder, uændrede varianter kasseres. På Isaks 80 opgaver: ~14.200 varianter, 0 uenige; 9 opgaver får ingen variant (figuraflæsning, 1 km osv.).
 - ✅ Velkomstguide, rate-limit, 40 scan/døgn, gendannelseskode + kodekort, Deploy-knap i README.
-- ✅ 105 tests (vitest + fast-check) i GitHub Actions og i `pnpm build`.
+- ✅ 111 tests (vitest + fast-check) i GitHub Actions og i `pnpm build`.
 - 🚧 Ingen rigtig AI-scanning kørt endnu (ingen nøgle på maskinen). Deploy-knappen ikke testet med fremmed konto.
 
 ## Next
@@ -32,7 +32,7 @@ Træning er bygget og deployet: temaets træningssted (Kanonøvelsen, Ridebanen,
 ## Run & test
 ```bash
 pnpm install
-pnpm test               # 105 tests
+pnpm test               # 111 tests
 pnpm db:init:local      # én gang
 pnpm dev:api            # API + D1 + R2 lokalt på 8787
 pnpm dev                # http://localhost:5180
