@@ -65,7 +65,7 @@ export function Besaetning({ progress, iDag }: Props) {
             ))}
           </div>
         )}
-        <p className="muted small">Glemmer du en dag, forsvinder den sidste {t.crewMedlem}.</p>
+        <p className="muted small">Glemmer du at regne to dage i træk, forsvinder den sidste {t.crewMedlem}.</p>
       </div>
 
       <div className="card">

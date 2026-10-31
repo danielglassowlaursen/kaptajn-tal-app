@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { aabnOpgaver, begrav, bogfoer, rapporterFacit } from '../src/lib/spil'
+import { aabnOpgaver, begrav, bogfoer, evaluerDage, rapporterFacit } from '../src/lib/spil'
 import { TOM_PROGRESS } from '../src/lib/progress'
 import { PIRAT } from '../src/tema/pirat'
 import { CONFIG } from '../src/config'
@@ -28,5 +28,35 @@ describe('melding om forkert facit', () => {
     expect(p.togter.t.done.o1).toBeUndefined()
     const igen = bogfoer(p, 't', 'o1', 'foerste', PIRAT)
     expect(igen.guld).toBe(CONFIG.guldFoersteForsoeg)
+  })
+})
+
+describe('besætningen springer fra hver anden glemte dag', () => {
+  const M = CONFIG.dagligtMaalSek
+  const med = (dage: Record<string, number>, sidsteTjek?: string) => ({ ...TOM_PROGRESS, crew: ['a', 'b', 'c', 'd', 'e'], dage, sidsteTjek })
+
+  it('én glemt dag er tilgivet', () => {
+    const r = evaluerDage(med({ '2026-10-29': M }), '2026-10-31', PIRAT)
+    expect(r.p.crew.length).toBe(5)
+    expect(r.events).toEqual([])
+  })
+
+  it('to glemte dage i træk koster ét medlem', () => {
+    const r = evaluerDage(med({ '2026-10-29': M }), '2026-11-01', PIRAT)
+    expect(r.p.crew.length).toBe(4)
+    expect(r.events).toHaveLength(1)
+  })
+
+  it('tæller videre over flere tjek (glemt i går, glemt i dag)', () => {
+    const a = evaluerDage(med({ '2026-10-29': M }), '2026-10-31', PIRAT).p
+    expect(a.crew.length).toBe(5)
+    const b = evaluerDage(a, '2026-11-01', PIRAT).p
+    expect(b.crew.length).toBe(4)
+  })
+
+  it('ti glemte dage koster fem, og en dag med regning nulstiller tællingen', () => {
+    expect(evaluerDage(med({ '2026-10-14': M }), '2026-10-25', PIRAT).p.crew.length).toBe(0)
+    const r = evaluerDage(med({ '2026-10-20': M, '2026-10-22': M, '2026-10-24': M }), '2026-10-26', PIRAT)
+    expect(r.p.crew.length).toBe(5)
   })
 })

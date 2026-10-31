@@ -146,7 +146,14 @@ export function tilfoejTid(p: Progress, sek: number, dag: string, tema: Tema): {
   return { p: next, events }
 }
 
-/** Tjek alle dage siden sidst: glemte dage koster et besætningsmedlem. */
+/** Hvor mange dage i træk, der er glemt til og med dag d (talt fra første aktive dag). */
+function glemtIStraek(dage: Record<string, number>, d: string, foerste: string): number {
+  let n = 0
+  for (let x = d; x >= foerste && (dage[x] ?? 0) < CONFIG.dagligtMaalSek; x = plusDage(x, -1)) n++
+  return n
+}
+
+/** Tjek alle dage siden sidst: hver anden glemte dag i træk koster et besætningsmedlem. */
 export function evaluerDage(p: Progress, iDag: string, tema: Tema): { p: Progress; events: string[] } {
   const aktiveDage = Object.keys(p.dage).sort()
   if (aktiveDage.length === 0) return { p, events: [] } // ikke startet endnu
@@ -156,10 +163,11 @@ export function evaluerDage(p: Progress, iDag: string, tema: Tema): { p: Progres
   const events: string[] = []
   for (let d = start; d <= iGaar; d = plusDage(d, 1)) {
     if ((next.dage[d] ?? 0) >= CONFIG.dagligtMaalSek) continue
+    if (glemtIStraek(next.dage, d, aktiveDage[0]) % 2 !== 0) continue // én glemt dag er tilgivet
     if (next.crew.length === 0) continue
     const vaek = crewNavn(tema, next.crew.length - 1)
     next = { ...next, crew: next.crew.slice(0, -1) }
-    events.push(`😢 Du glemte at regne ${pænDag(d)}. ${tema.forlader(vaek)}`)
+    events.push(`😢 Du har ikke regnet i to dage (til og med ${pænDag(d)}). ${tema.forlader(vaek)}`)
   }
   if (next !== p || p.sidsteTjek !== iGaar) next = { ...next, sidsteTjek: iGaar }
   return { p: next, events }

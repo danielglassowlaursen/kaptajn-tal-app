@@ -56,7 +56,7 @@ export const FLYT: Tema = {
   crewMedlemmer: 'ting til lejligheden',
   ombord: 'I lejligheden',
   kommerMed: (n) => `${n} er flyttet ind i din lejlighed.`,
-  forlader: (n) => `${n} blev solgt, fordi en dag gik uden matematik.`,
+  forlader: (n) => `${n} blev solgt, fordi to dage gik uden matematik.`,
   crewNavne: [
     'Madrassen', 'Kaffemaskinen', 'Sofaen', 'Spisebordet', 'Køleskabet', 'Støvsugeren', 'Lampen', 'Gryden',
     'Bogreolen', 'Vaskemaskinen', 'Planten', 'Skrivebordet', 'Tæppet', 'Højttaleren', 'Brødristeren', 'Cyklen',
