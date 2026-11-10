@@ -60,10 +60,12 @@ export function tidsforskel(s: string): number | null {
 export function pladsvaerdi(s: string): number | null {
   const vaegt: Record<string, number> = {
     enere: 1, ener: 1, tiere: 10, tier: 10, hundreder: 100, hundrede: 100, tusinder: 1000, tusinde: 1000, tusind: 1000, titusinder: 10000,
+    tiendedele: 0.1, tiendedel: 0.1, hundrededele: 0.01, hundrededel: 0.01,
   }
-  const fund = [...s.toLowerCase().matchAll(/(\d+)\s+(titusinder|tusinder|tusinde|tusind|hundreder|hundrede|tiere|tier|enere|ener)\b/g)]
+  const fund = [...s.toLowerCase().matchAll(/(\d+)\s+(titusinder|tusinder|tusinde|tusind|hundrededele|hundrededel|hundreder|hundrede|tiendedele|tiendedel|tiere|tier|enere|ener)\b/g)]
   if (fund.length < 2) return null
-  return fund.reduce((sum, m) => sum + Number(m[1]) * vaegt[m[2]], 0)
+  // Afrund, så 0,1-vægtene ikke giver kommatals-støj (fx 7538,400000001)
+  return Math.round(fund.reduce((sum, m) => sum + Number(m[1]) * vaegt[m[2]], 0) * 100) / 100
 }
 
 // ------------------------------------------------------------ ligninger
