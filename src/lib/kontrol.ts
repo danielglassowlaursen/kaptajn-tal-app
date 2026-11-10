@@ -213,6 +213,8 @@ function vaelgRegel(tekst: string): ((v: number) => boolean) | null {
   const t = tekst.toLowerCase()
   if (/\bulige\b/.test(t)) return (v) => Number.isInteger(v) && Math.abs(v % 2) === 1
   if (/\blige tal\b/.test(t)) return (v) => Number.isInteger(v) && v % 2 === 0
+  const opI = t.match(/går op i (\d+)/)
+  if (opI) return (v) => Number.isInteger(v) && v > 0 && Number(opI[1]) % v === 0
   if (/\bhele tal\b/.test(t)) return (v) => Number.isInteger(v)
   if (/\bprimtal\b/.test(t)) return erPrimtal
   if (/\bnegative?\b/.test(t)) return (v) => v < 0
@@ -242,7 +244,10 @@ export function kontrol(o: Opgave): Kontrol {
       if (plads !== null) return plads === o.answer ? ok('Appen lagde pladserne sammen') : uenig({ ...o, answer: plads }, 'Appen lagde pladserne sammen')
       const tid = [o.regnestykke ?? '', o.question, o.story].map(tidsforskel).find((x) => x !== null) ?? null
       if (tid !== null && o.unit && /tim|min/i.test(o.unit)) {
-        const v = /tim/i.test(o.unit) ? tid / 60 : tid
+        // "Hvor mange hele timer?" og "hvor mange minutter ud over?" deler tidsforskellen op
+        const v = /tim/i.test(o.unit)
+          ? /hele timer/i.test(o.question) ? Math.floor(tid / 60) : tid / 60
+          : /ud over|derudover/i.test(o.question) ? tid % 60 : tid
         return talMatcher(v, o.answer, o.decimaler) ? ok('Appen regnede tidsforskellen ud') : uenig({ ...o, answer: afrund(v, 2) }, 'Appen regnede tidsforskellen ud')
       }
       return ukendt('Opgaven har ingen udregning, appen kan regne på.')
